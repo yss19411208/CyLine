@@ -1,0 +1,14 @@
+[
+    {
+        "id": "CAM-ASC-001",
+        "type": "CAM",
+        "map": "ASC",
+        "jump": true,
+        "note": null,
+        "author_id": 1215830583209492520,
+        "author_name": "harima1954",
+        "aim_image": "data/images/aim/CAM-ASC-001.png",
+        "result_image": "data/images/result/CAM-ASC-001.png",
+        "created_at": "2026-06-15T13:11:43.065936"
+    }
+]
