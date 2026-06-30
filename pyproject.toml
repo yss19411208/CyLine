@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyline"
+version = "0.1.0"
+description = "Discord and GitHub Pages tools for registering VALORANT Cypher lineups."
+requires-python = ">=3.11"
+dependencies = [
+  "discord.py>=2.7,<3",
+  "Flask>=3.1,<4",
+  "flask-cors>=6,<7",
+  "Pillow>=11,<12",
+  "python-dotenv>=1.1,<2",
+  "requests>=2.32,<3",
+]
+
+[project.scripts]
+cyline-bot = "cyline.discord_bot:run"
+cyline-api = "cyline.web_api:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]

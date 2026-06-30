@@ -1,0 +1,283 @@
+:root {
+  color-scheme: dark;
+  --background: #101314;
+  --surface: #171d1f;
+  --surface-strong: #20282b;
+  --text: #f3f7f6;
+  --muted: #a8b4b2;
+  --accent: #2dd4bf;
+  --accent-strong: #14b8a6;
+  --danger: #fb7185;
+  --line: #2c383b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text);
+  font-family: Arial, "Yu Gothic", sans-serif;
+}
+
+.topbar {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--line);
+  background: #121718;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.topbar p,
+.status,
+label,
+.card-meta,
+.detail dl,
+.form-result {
+  color: var(--muted);
+}
+
+.status {
+  min-width: 96px;
+  text-align: right;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 340px;
+  gap: 18px;
+  padding: 18px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.filters,
+.register-panel form {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+}
+
+select,
+input,
+textarea,
+button {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  padding: 8px 10px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  cursor: pointer;
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: #031312;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.checkbox-row input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.coordinate-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lineup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.lineup-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.lineup-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  background: #0b0f10;
+}
+
+.card-body {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.card-title {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.empty {
+  color: var(--muted);
+  padding: 32px 4px;
+}
+
+dialog {
+  width: min(980px, calc(100vw - 28px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.72);
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  gap: 18px;
+  padding: 18px;
+  position: relative;
+}
+
+.detail img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #0b0f10;
+}
+
+.detail dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 12px;
+}
+
+.detail dt {
+  color: var(--muted);
+}
+
+.detail dd {
+  margin: 0;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  min-height: 34px;
+  border-radius: 50%;
+}
+
+.form-result {
+  min-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.form-result.error {
+  color: var(--danger);
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .register-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .status {
+    text-align: left;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .detail {
+    grid-template-columns: 1fr;
+  }
+}
+

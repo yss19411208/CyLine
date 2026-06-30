@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CyLine</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>CyLine</h1>
+        <p>Cypher lineups</p>
+      </div>
+      <div class="status" id="statusText">Loading</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel filters">
+        <label>
+          Map
+          <select id="mapFilter"></select>
+        </label>
+        <label>
+          Ability
+          <select id="abilityFilter">
+            <option value="">All</option>
+            <option value="camera">Camera</option>
+            <option value="cage">Cyber Cage</option>
+            <option value="wire">Trapwire</option>
+          </select>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="jumpFilter">
+          Jump only
+        </label>
+      </section>
+
+      <section class="content">
+        <div class="lineup-grid" id="lineupGrid"></div>
+      </section>
+
+      <section class="panel register-panel">
+        <h2>Register</h2>
+        <form id="registerForm">
+          <label>
+            Screenshot
+            <input type="file" name="screenshot" accept="image/png,image/jpeg,image/webp" required>
+          </label>
+          <label>
+            Map
+            <select name="map" id="registerMap" required></select>
+          </label>
+          <label>
+            Ability
+            <select name="ability" required>
+              <option value="camera">Camera</option>
+              <option value="cage">Cyber Cage</option>
+              <option value="wire">Trapwire</option>
+            </select>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" name="jump">
+            Jump
+          </label>
+          <label>
+            Title
+            <input type="text" name="title" maxlength="120">
+          </label>
+          <label>
+            Description
+            <textarea name="description" rows="4" maxlength="1200"></textarea>
+          </label>
+          <div class="coordinate-row">
+            <label>
+              X
+              <input type="number" name="position_x" min="0" max="100" step="0.01">
+            </label>
+            <label>
+              Y
+              <input type="number" name="position_y" min="0" max="100" step="0.01">
+            </label>
+          </div>
+          <button type="submit">Submit</button>
+          <p class="form-result" id="formResult"></p>
+        </form>
+      </section>
+    </main>
+
+    <dialog id="detailDialog">
+      <article class="detail">
+        <button class="close-button" id="closeDialog" aria-label="Close">x</button>
+        <img id="detailImage" alt="">
+        <div>
+          <h2 id="detailTitle"></h2>
+          <dl id="detailMeta"></dl>
+          <p id="detailDescription"></p>
+        </div>
+      </article>
+    </dialog>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
