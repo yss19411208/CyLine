@@ -1,6 +1,32 @@
 {
-  "generated_at": null,
-  "lineups": [],
+  "generated_at": "2026-06-30T16:26:32+00:00",
+  "lineups": [
+    {
+      "ability": "camera",
+      "ability_label": "Camera",
+      "author": {
+        "display_name": "harima1954",
+        "source": "discord",
+        "user_id": "1215830583209492520"
+      },
+      "created_at": "2026-06-30T16:26:32+00:00",
+      "data_path": "data/lineups/20260630T162632+0000-3695133e.json",
+      "description": "",
+      "detected_position": {
+        "confidence": 0.65,
+        "method": "top_left_minimap_bright_marker",
+        "needs_review": false,
+        "note": "This is a first-pass estimate from the top-left minimap crop. Rotated minimaps require calibrated templates for high confidence.",
+        "x_percent": 33.57,
+        "y_percent": 57.96
+      },
+      "id": "20260630T162632+0000-3695133e",
+      "image_path": "assets/lineups/20260630T162632+0000-3695133e.png",
+      "jump": true,
+      "jump_label": "Jump",
+      "map": "Lotus",
+      "title": ""
+    }
+  ],
   "schema_version": 1
 }
-
