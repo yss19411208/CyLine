@@ -56,6 +56,12 @@ Required for the Discord bot:
 CYLINE_DISCORD_TOKEN=your_discord_bot_token
 ```
 
+Use the raw GitHub `docs/` URL for Discord image links:
+
+```env
+CYLINE_PUBLIC_BASE_URL=https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/
+```
+
 Recommended for development:
 
 ```env
@@ -111,6 +117,13 @@ The page reads:
 
 ```text
 docs/data/index.json
+```
+
+The GitHub Pages site is still used for the HTML viewer. Discord image links use
+the raw GitHub URL configured in `CYLINE_PUBLIC_BASE_URL`, for example:
+
+```text
+https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/assets/lineups/example.png
 ```
 
 Local preview with Node.js:
