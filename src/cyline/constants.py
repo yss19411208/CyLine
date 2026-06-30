@@ -1,12 +1,12 @@
 ABILITIES = {
-    "camera": "Camera",
-    "cage": "Cyber Cage",
-    "wire": "Trapwire",
+    "camera": "スパイカメラ",
+    "cage": "サイバーケージ",
+    "wire": "トラップワイヤー",
 }
 
 JUMP_LABELS = {
-    False: "No jump",
-    True: "Jump",
+    False: "ジャンプなし",
+    True: "ジャンプあり",
 }
 
 # Source for the initial list: Riot Games VALORANT maps page.
@@ -26,4 +26,3 @@ VALORANT_MAPS = [
     "Split",
     "Sunset",
 ]
-

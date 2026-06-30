@@ -41,12 +41,12 @@ def create_app(settings: Settings | None = None) -> Flask:
 
         screenshot = request.files.get("screenshot")
         if screenshot is None:
-            return jsonify({"error": "screenshot file is required."}), 400
+            return jsonify({"error": "スクリーンショット画像が必要です。"}), 400
 
         try:
             screenshot_bytes = screenshot.read(active_settings.max_screenshot_bytes + 1)
             if len(screenshot_bytes) > active_settings.max_screenshot_bytes:
-                return jsonify({"error": "screenshot is too large."}), 400
+                return jsonify({"error": "スクリーンショットが大きすぎます。"}), 400
 
             lineup_input = _read_lineup_input_from_form()
             author = Author(
@@ -87,7 +87,7 @@ def _check_authorization(settings: Settings):
 
     submitted_token = request.headers.get("X-CyLine-Token", "")
     if submitted_token != settings.web_api_token:
-        return jsonify({"error": "unauthorized"}), 401
+        return jsonify({"error": "認証に失敗しました。"}), 401
 
     return None
 
@@ -111,13 +111,13 @@ def _read_manual_position_from_form() -> ManualPosition | None:
         return None
 
     if not raw_position_x or not raw_position_y:
-        raise ValueError("Both position_x and position_y are required.")
+        raise ValueError("position_xとposition_yは両方指定してください。")
 
     try:
         position_x = float(raw_position_x)
         position_y = float(raw_position_y)
     except ValueError as conversion_error:
-        raise ValueError("position_x and position_y must be numbers.") from conversion_error
+        raise ValueError("position_xとposition_yは数値で指定してください。") from conversion_error
 
     return ManualPosition(x_percent=position_x, y_percent=position_y)
 
@@ -129,4 +129,3 @@ def _read_bool_from_form(field_name: str) -> bool:
 
 if __name__ == "__main__":
     run()
-

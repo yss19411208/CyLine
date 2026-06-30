@@ -25,7 +25,7 @@ class GitPublisher:
                 attempted=False,
                 committed=False,
                 pushed=False,
-                message="Git publish was skipped by configuration.",
+                message="設定によりGit公開処理をスキップしました。",
             )
 
         relative_paths = [
@@ -39,7 +39,7 @@ class GitPublisher:
                 attempted=True,
                 committed=False,
                 pushed=False,
-                message=f"git add failed: {add_result.stderr.strip()}",
+                message=f"git addに失敗しました: {add_result.stderr.strip()}",
             )
 
         diff_result = self._run_git(["diff", "--cached", "--quiet"])
@@ -48,7 +48,7 @@ class GitPublisher:
                 attempted=True,
                 committed=False,
                 pushed=False,
-                message="No staged changes were found.",
+                message="ステージ済みの変更はありませんでした。",
             )
 
         committed = False
@@ -59,7 +59,7 @@ class GitPublisher:
                     attempted=True,
                     committed=False,
                     pushed=False,
-                    message=f"git commit failed: {commit_result.stderr.strip()}",
+                    message=f"git commitに失敗しました: {commit_result.stderr.strip()}",
                 )
             committed = True
 
@@ -74,7 +74,7 @@ class GitPublisher:
                     attempted=True,
                     committed=committed,
                     pushed=False,
-                    message=f"git push failed: {push_result.stderr.strip()}",
+                    message=f"git pushに失敗しました: {push_result.stderr.strip()}",
                 )
             pushed = True
 
@@ -82,14 +82,14 @@ class GitPublisher:
             attempted=True,
             committed=committed,
             pushed=pushed,
-            message="Git publish completed.",
+            message="Git公開処理が完了しました。",
         )
 
     def _current_branch(self) -> str:
         branch_result = self._run_git(["branch", "--show-current"])
         branch_name = branch_result.stdout.strip()
         if branch_result.returncode != 0 or not branch_name:
-            raise RuntimeError("Could not determine the current Git branch.")
+            raise RuntimeError("現在のGitブランチを判定できませんでした。")
         return branch_name
 
     def _run_git(self, arguments: list[str]) -> subprocess.CompletedProcess[str]:
@@ -111,4 +111,3 @@ def _to_repo_relative_path(repo_root: Path, changed_path: Path) -> str:
         raise ValueError(
             f"Refusing to publish a path outside the repository: {changed_path}"
         ) from path_error
-

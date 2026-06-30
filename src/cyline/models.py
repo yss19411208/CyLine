@@ -30,18 +30,17 @@ class LineupInput:
     def validate(self) -> None:
         if self.valorant_map not in VALORANT_MAPS:
             valid_maps = ", ".join(VALORANT_MAPS)
-            raise ValueError(f"Unknown map: {self.valorant_map}. Valid maps: {valid_maps}")
+            raise ValueError(f"不明なマップです: {self.valorant_map}。選択可能: {valid_maps}")
 
         if self.ability not in ABILITIES:
             valid_abilities = ", ".join(sorted(ABILITIES))
             raise ValueError(
-                f"Unknown ability: {self.ability}. Valid abilities: {valid_abilities}"
+                f"不明なアビリティです: {self.ability}。選択可能: {valid_abilities}"
             )
 
         if self.manual_position is not None:
             if not 0 <= self.manual_position.x_percent <= 100:
-                raise ValueError("manual x position must be between 0 and 100.")
+                raise ValueError("手動補正のX座標は0から100の範囲で指定してください。")
 
             if not 0 <= self.manual_position.y_percent <= 100:
-                raise ValueError("manual y position must be between 0 and 100.")
-
+                raise ValueError("手動補正のY座標は0から100の範囲で指定してください。")

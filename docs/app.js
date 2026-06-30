@@ -35,7 +35,7 @@
   const closeDialog = document.getElementById("closeDialog");
 
   function setupMapOptions() {
-    mapFilter.innerHTML = '<option value="">All</option>';
+    mapFilter.innerHTML = '<option value="">すべて</option>';
     registerMap.innerHTML = "";
     maps.forEach((mapName) => {
       const filterOption = document.createElement("option");
@@ -59,10 +59,10 @@
       const indexData = await response.json();
       state.lineups = Array.isArray(indexData.lineups) ? indexData.lineups : [];
       applyFilters();
-      statusText.textContent = `${state.lineups.length} items`;
+      statusText.textContent = `${state.lineups.length}件`;
     } catch (error) {
-      statusText.textContent = "Load failed";
-      lineupGrid.innerHTML = '<p class="empty">Could not load data/index.json.</p>';
+      statusText.textContent = "読み込み失敗";
+      lineupGrid.innerHTML = '<p class="empty">data/index.jsonを読み込めませんでした。</p>';
     }
   }
 
@@ -94,7 +94,7 @@
     lineupGrid.innerHTML = "";
 
     if (state.filteredLineups.length === 0) {
-      lineupGrid.innerHTML = '<p class="empty">No lineups found.</p>';
+      lineupGrid.innerHTML = '<p class="empty">定点が見つかりません。</p>';
       return;
     }
 
@@ -145,13 +145,13 @@
 
     const position = lineup.detected_position || {};
     const fields = [
-      ["Map", lineup.map],
-      ["Ability", lineup.ability_label],
-      ["Jump", lineup.jump_label],
-      ["Position", formatPosition(position)],
-      ["Confidence", String(position.confidence ?? "unknown")],
-      ["Author", lineup.author?.display_name || "unknown"],
-      ["Created", lineup.created_at]
+      ["マップ", lineup.map],
+      ["アビリティ", lineup.ability_label],
+      ["ジャンプ", lineup.jump_label],
+      ["位置", formatPosition(position)],
+      ["信頼度", String(position.confidence ?? "不明")],
+      ["登録者", lineup.author?.display_name || "不明"],
+      ["登録日時", lineup.created_at]
     ];
 
     fields.forEach(([label, value]) => {
@@ -167,9 +167,9 @@
 
   function formatPosition(position) {
     if (typeof position.x_percent !== "number" || typeof position.y_percent !== "number") {
-      return "Needs review";
+      return "要確認";
     }
-    const reviewSuffix = position.needs_review ? " / review" : "";
+    const reviewSuffix = position.needs_review ? " / 要確認" : "";
     return `${position.x_percent}, ${position.y_percent}${reviewSuffix}`;
   }
 
@@ -181,7 +181,7 @@
     const config = window.CYLINE_CONFIG || {};
     if (!config.apiBaseUrl) {
       formResult.classList.add("error");
-      formResult.textContent = "API base URL is not configured.";
+      formResult.textContent = "APIのURLが設定されていません。";
       return;
     }
 
@@ -200,12 +200,12 @@
         throw new Error(responseData.error || `HTTP ${response.status}`);
       }
 
-      formResult.textContent = `Registered: ${responseData.record.id}`;
+      formResult.textContent = `登録しました: ${responseData.record.id}`;
       registerForm.reset();
       await loadLineups();
     } catch (error) {
       formResult.classList.add("error");
-      formResult.textContent = `Registration failed: ${error.message}`;
+      formResult.textContent = `登録に失敗しました: ${error.message}`;
     } finally {
       submitButton.disabled = false;
     }

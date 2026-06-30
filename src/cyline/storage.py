@@ -113,9 +113,9 @@ class LineupStorage:
 
 def _build_lineup_id(created_at: str) -> str:
     compact_timestamp = (
-        created_at.replace("-", "")
+        created_at.replace("+00:00", "Z")
+        .replace("-", "")
         .replace(":", "")
-        .replace("+00:00", "Z")
     )
     return f"{compact_timestamp}-{secrets.token_hex(4)}"
 
@@ -129,11 +129,11 @@ def _safe_image_extension(original_filename: str) -> str:
 
 def _validate_screenshot_size(screenshot_bytes: bytes, max_screenshot_bytes: int) -> None:
     if not screenshot_bytes:
-        raise ValueError("Screenshot is empty.")
+        raise ValueError("スクリーンショットが空です。")
 
     if len(screenshot_bytes) > max_screenshot_bytes:
         raise ValueError(
-            f"Screenshot is too large. Limit: {max_screenshot_bytes} bytes."
+            f"スクリーンショットが大きすぎます。上限: {max_screenshot_bytes} bytes。"
         )
 
 
@@ -147,7 +147,7 @@ def _validate_screenshot_image(screenshot_bytes: bytes) -> None:
         with Image.open(BytesIO(screenshot_bytes)) as image:
             image.verify()
     except (OSError, SyntaxError) as image_error:
-        raise ValueError("Screenshot must be a valid PNG, JPEG, or WEBP image.") from image_error
+        raise ValueError("スクリーンショットは有効なPNG、JPEG、WEBP画像にしてください。") from image_error
 
 
 def _write_json(path: Path, data: dict) -> None:

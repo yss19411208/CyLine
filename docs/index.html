@@ -3,36 +3,36 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CyLine</title>
+    <title>CyLine - Cypher定点</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <header class="topbar">
       <div>
         <h1>CyLine</h1>
-        <p>Cypher lineups</p>
+        <p>Cypher定点</p>
       </div>
-      <div class="status" id="statusText">Loading</div>
+      <div class="status" id="statusText">読み込み中</div>
     </header>
 
     <main class="layout">
       <section class="panel filters">
         <label>
-          Map
+          マップ
           <select id="mapFilter"></select>
         </label>
         <label>
-          Ability
+          アビリティ
           <select id="abilityFilter">
-            <option value="">All</option>
-            <option value="camera">Camera</option>
-            <option value="cage">Cyber Cage</option>
-            <option value="wire">Trapwire</option>
+            <option value="">すべて</option>
+            <option value="camera">スパイカメラ</option>
+            <option value="cage">サイバーケージ</option>
+            <option value="wire">トラップワイヤー</option>
           </select>
         </label>
         <label class="checkbox-row">
           <input type="checkbox" id="jumpFilter">
-          Jump only
+          ジャンプのみ
         </label>
       </section>
 
@@ -41,34 +41,34 @@
       </section>
 
       <section class="panel register-panel">
-        <h2>Register</h2>
+        <h2>登録</h2>
         <form id="registerForm">
           <label>
-            Screenshot
+            スクリーンショット
             <input type="file" name="screenshot" accept="image/png,image/jpeg,image/webp" required>
           </label>
           <label>
-            Map
+            マップ
             <select name="map" id="registerMap" required></select>
           </label>
           <label>
-            Ability
+            アビリティ
             <select name="ability" required>
-              <option value="camera">Camera</option>
-              <option value="cage">Cyber Cage</option>
-              <option value="wire">Trapwire</option>
+              <option value="camera">スパイカメラ</option>
+              <option value="cage">サイバーケージ</option>
+              <option value="wire">トラップワイヤー</option>
             </select>
           </label>
           <label class="checkbox-row">
             <input type="checkbox" name="jump">
-            Jump
+            ジャンプする
           </label>
           <label>
-            Title
+            タイトル
             <input type="text" name="title" maxlength="120">
           </label>
           <label>
-            Description
+            説明
             <textarea name="description" rows="4" maxlength="1200"></textarea>
           </label>
           <div class="coordinate-row">
@@ -81,7 +81,7 @@
               <input type="number" name="position_y" min="0" max="100" step="0.01">
             </label>
           </div>
-          <button type="submit">Submit</button>
+          <button type="submit">登録</button>
           <p class="form-result" id="formResult"></p>
         </form>
       </section>

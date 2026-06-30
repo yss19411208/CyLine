@@ -38,16 +38,16 @@ def create_bot(settings: Settings | None = None) -> commands.Bot:
         for map_name in VALORANT_MAPS
     ]
 
-    @bot.tree.command(name="register", description="Register a Cypher lineup.")
+    @bot.tree.command(name="register", description="Cypherの定点を登録します。")
     @app_commands.describe(
-        screenshot="Screenshot with the minimap visible.",
-        ability="Cypher ability.",
-        jump="Whether the lineup uses a jump.",
-        valorant_map="VALORANT map.",
-        title="Optional lineup title.",
-        description="Optional memo.",
-        position_x="Optional manual minimap X position, 0 to 100.",
-        position_y="Optional manual minimap Y position, 0 to 100.",
+        screenshot="ミニマップが映っているスクリーンショット。",
+        ability="Cypherのアビリティ。",
+        jump="ジャンプする定点かどうか。",
+        valorant_map="VALORANTのマップ。",
+        title="任意のタイトル。",
+        description="任意の説明。",
+        position_x="任意の手動補正X座標。0から100。",
+        position_y="任意の手動補正Y座標。0から100。",
     )
     @app_commands.rename(valorant_map="map")
     @app_commands.choices(ability=ability_choices, valorant_map=map_choices)
@@ -68,8 +68,8 @@ def create_bot(settings: Settings | None = None) -> commands.Bot:
             manual_position = _build_manual_position(position_x, position_y)
             if screenshot.size > active_settings.max_screenshot_bytes:
                 raise ValueError(
-                    "Screenshot is too large. "
-                    f"Limit: {active_settings.max_screenshot_bytes} bytes."
+                    "スクリーンショットが大きすぎます。"
+                    f"上限: {active_settings.max_screenshot_bytes} bytes。"
                 )
 
             screenshot_bytes = await screenshot.read()
@@ -95,7 +95,7 @@ def create_bot(settings: Settings | None = None) -> commands.Bot:
 
         except Exception as registration_error:
             await interaction.followup.send(
-                f"Registration failed: {registration_error}",
+                f"登録に失敗しました: {registration_error}",
                 ephemeral=True,
             )
             return
@@ -109,7 +109,7 @@ def create_bot(settings: Settings | None = None) -> commands.Bot:
             await _notify_channel(bot, active_settings, record)
         except Exception as notification_error:
             await interaction.followup.send(
-                f"Registered, but Discord notification failed: {notification_error}",
+                f"登録は完了しましたが、Discord通知に失敗しました: {notification_error}",
                 ephemeral=True,
             )
 
@@ -119,7 +119,7 @@ def create_bot(settings: Settings | None = None) -> commands.Bot:
 def run() -> None:
     settings = Settings.from_env()
     if not settings.discord_token:
-        raise RuntimeError("CYLINE_DISCORD_TOKEN is required.")
+        raise RuntimeError("CYLINE_DISCORD_TOKENを.envに設定してください。")
 
     bot = create_bot(settings)
     bot.run(settings.discord_token)
@@ -133,24 +133,24 @@ def _build_manual_position(
         return None
 
     if position_x is None or position_y is None:
-        raise ValueError("Both position_x and position_y are required for manual correction.")
+        raise ValueError("手動補正を使う場合はposition_xとposition_yを両方指定してください。")
 
     return ManualPosition(x_percent=position_x, y_percent=position_y)
 
 
 def _build_success_message(settings: Settings, record: dict, git_message: str) -> str:
     image_url = build_public_url(settings, record["image_path"])
-    review_text = "needs review" if record["detected_position"]["needs_review"] else "confirmed"
+    review_text = "要確認" if record["detected_position"]["needs_review"] else "確認済み"
     lines = [
-        f"Registered: {record['id']}",
-        f"Map: {record['map']}",
-        f"Ability: {record['ability_label']}",
-        f"Jump: {record['jump_label']}",
-        f"Position: {review_text}, confidence {record['detected_position']['confidence']}",
+        f"登録しました: {record['id']}",
+        f"マップ: {record['map']}",
+        f"アビリティ: {record['ability_label']}",
+        f"ジャンプ: {record['jump_label']}",
+        f"位置: {review_text}、信頼度 {record['detected_position']['confidence']}",
         f"Git: {git_message}",
     ]
     if image_url:
-        lines.append(f"Image: {image_url}")
+        lines.append(f"画像: {image_url}")
     return "\n".join(lines)
 
 
@@ -169,14 +169,14 @@ async def _notify_channel(
     image_url = build_public_url(settings, record["image_path"])
     embed = discord.Embed(
         title=record["title"] or f"{record['map']} {record['ability_label']}",
-        description=record["description"] or "New Cypher lineup registered.",
+        description=record["description"] or "新しいCypher定点が登録されました。",
         color=discord.Color.teal(),
     )
-    embed.add_field(name="Map", value=record["map"], inline=True)
-    embed.add_field(name="Ability", value=record["ability_label"], inline=True)
-    embed.add_field(name="Jump", value=record["jump_label"], inline=True)
+    embed.add_field(name="マップ", value=record["map"], inline=True)
+    embed.add_field(name="アビリティ", value=record["ability_label"], inline=True)
+    embed.add_field(name="ジャンプ", value=record["jump_label"], inline=True)
     embed.add_field(
-        name="Position confidence",
+        name="位置推定の信頼度",
         value=str(record["detected_position"]["confidence"]),
         inline=True,
     )

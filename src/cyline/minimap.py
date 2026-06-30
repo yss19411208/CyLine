@@ -27,7 +27,7 @@ def estimate_player_position(
             confidence=1.0,
             method="manual",
             needs_review=False,
-            note="Manual correction was supplied by the user.",
+            note="ユーザーが手動補正した位置です。",
         )
 
     try:
@@ -39,7 +39,7 @@ def estimate_player_position(
             confidence=0.0,
             method="unavailable",
             needs_review=True,
-            note="Pillow is not installed, so automatic minimap analysis was skipped.",
+            note="Pillowがインストールされていないため、ミニマップ解析をスキップしました。",
         )
 
     try:
@@ -53,7 +53,7 @@ def estimate_player_position(
                     confidence=0.0,
                     method="image_too_small",
                     needs_review=True,
-                    note="The screenshot is too small for reliable minimap analysis.",
+                    note="スクリーンショットが小さすぎるため、ミニマップ解析の信頼度を確保できません。",
                 )
 
             minimap_crop = _crop_likely_minimap(rgb_image)
@@ -65,7 +65,7 @@ def estimate_player_position(
                     confidence=0.0,
                     method="top_left_minimap_bright_marker",
                     needs_review=True,
-                    note="No reliable player marker candidate was found.",
+                    note="信頼できるプレイヤーマーカー候補が見つかりませんでした。",
                 )
 
             marker_x, marker_y, confidence = marker_position
@@ -80,8 +80,8 @@ def estimate_player_position(
                 method="top_left_minimap_bright_marker",
                 needs_review=confidence < 0.55,
                 note=(
-                    "This is a first-pass estimate from the top-left minimap crop. "
-                    "Rotated minimaps require calibrated templates for high confidence."
+                    "左上のミニマップ候補から推定した初期版の結果です。"
+                    "回転したミニマップを高精度に扱うには、マップ別テンプレートが必要です。"
                 ),
             )
     except OSError:
@@ -91,7 +91,7 @@ def estimate_player_position(
             confidence=0.0,
             method="invalid_image",
             needs_review=True,
-            note="The uploaded file could not be opened as an image.",
+            note="アップロードされたファイルを画像として開けませんでした。",
         )
 
 
@@ -147,4 +147,3 @@ def _find_bright_marker(rgb_image):
     density_score = min(weight_sum / 240, 1.0)
     confidence = round(min(0.2 + density_score * 0.45 + strongest_weight * 0.2, 0.65), 2)
     return marker_x, marker_y, confidence
-
