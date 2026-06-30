@@ -1,0 +1,83 @@
+{
+  "role_name": "Valorant Player",
+  "custom_mode_value": "custom",
+  "max_selected_players": 10,
+  "player_select_page_size": 25,
+  "setup_timeout_seconds": 180,
+  "note_max_length": 1000,
+  "modes": [
+    {
+      "label": "カスタム",
+      "value": "custom"
+    },
+    {
+      "label": "コンペティティブ",
+      "value": "competitive"
+    },
+    {
+      "label": "アンレート",
+      "value": "unrated"
+    },
+    {
+      "label": "スイフトプレイ",
+      "value": "swiftplay"
+    },
+    {
+      "label": "スパイクラッシュ",
+      "value": "spike_rush"
+    },
+    {
+      "label": "デスマッチ",
+      "value": "deathmatch"
+    },
+    {
+      "label": "チームデスマッチ",
+      "value": "team_deathmatch"
+    }
+  ],
+  "maps": [
+    "Corrode",
+    "Abyss",
+    "Sunset",
+    "Lotus",
+    "Pearl",
+    "Fracture",
+    "Breeze",
+    "Icebox",
+    "Ascent",
+    "Split",
+    "Haven",
+    "Bind"
+  ],
+  "agents": [
+    "Astra",
+    "Breach",
+    "Brimstone",
+    "Chamber",
+    "Clove",
+    "Cypher",
+    "Deadlock",
+    "Fade",
+    "Gekko",
+    "Harbor",
+    "Iso",
+    "Jett",
+    "KAY/O",
+    "Killjoy",
+    "Miks",
+    "Neon",
+    "Omen",
+    "Phoenix",
+    "Raze",
+    "Reyna",
+    "Sage",
+    "Skye",
+    "Sova",
+    "Tejo",
+    "Veto",
+    "Viper",
+    "Vyse",
+    "Waylay",
+    "Yoru"
+  ]
+}

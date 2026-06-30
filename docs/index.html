@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VALOMASTER Config</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172029;
+        --muted: #5d6875;
+        --line: #d9dee6;
+        --surface: #ffffff;
+        --panel: #f5f7fa;
+        --accent: #d13b4c;
+        --accent-dark: #9f2230;
+        --focus: #0b6bcb;
+        --ok: #1d7f4f;
+        --bad: #b3261e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--panel);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0 40px;
+      }
+
+      header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        margin: 16px 0 8px;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      section,
+      aside {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      label {
+        display: block;
+        margin: 10px 0 6px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        padding: 8px 10px;
+      }
+
+      textarea {
+        min-height: 260px;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      button:focus {
+        outline: 3px solid color-mix(in srgb, var(--focus) 24%, transparent);
+        outline-offset: 1px;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 650;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      button.primary:hover {
+        background: var(--accent-dark);
+      }
+
+      button:hover {
+        border-color: #aab3bf;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .tab {
+        border-radius: 999px;
+      }
+
+      .tab[aria-selected="true"] {
+        border-color: var(--ink);
+        background: var(--ink);
+        color: #fff;
+      }
+
+      .add-row,
+      .mode-row,
+      .item-row {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .add-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .mode-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      }
+
+      .item-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .danger {
+        color: var(--bad);
+      }
+
+      .status {
+        min-height: 24px;
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .status.ok {
+        color: var(--ok);
+      }
+
+      .status.bad {
+        color: var(--bad);
+      }
+
+      .count {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 820px) {
+        main {
+          width: min(100% - 20px, 1180px);
+          padding-top: 16px;
+        }
+
+        header,
+        .layout {
+          display: block;
+        }
+
+        .toolbar {
+          justify-content: flex-start;
+          margin-top: 12px;
+        }
+
+        aside {
+          margin-bottom: 14px;
+        }
+
+        .grid,
+        .mode-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>VALOMASTER Config</h1>
+          <div class="count" id="summaryText">未読み込み</div>
+        </div>
+        <div class="toolbar">
+          <button id="loadPublicButton" type="button">Pagesから読み込み</button>
+          <button id="downloadButton" type="button">JSON保存</button>
+          <button class="primary" id="commitButton" type="button">GitHubへ反映</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside>
+          <h2>Repository</h2>
+          <label for="ownerInput">Owner</label>
+          <input id="ownerInput" autocomplete="organization" placeholder="github-user">
+
+          <label for="repoInput">Repository</label>
+          <input id="repoInput" autocomplete="off" placeholder="VALOMASTER">
+
+          <label for="branchInput">Branch</label>
+          <input id="branchInput" autocomplete="off" value="main">
+
+          <label for="pathInput">Config path</label>
+          <input id="pathInput" autocomplete="off" value="data/valorant_config.json">
+
+          <label for="tokenInput">GitHub token</label>
+          <input id="tokenInput" type="password" autocomplete="off">
+
+          <label for="messageInput">Commit message</label>
+          <input id="messageInput" autocomplete="off" value="Update Valorant config from Pages editor">
+
+          <div class="status" id="statusText"></div>
+        </aside>
+
+        <section>
+          <div class="tabs" role="tablist" aria-label="編集カテゴリ">
+            <button class="tab" id="agentsTab" type="button" role="tab" aria-selected="true">Agents</button>
+            <button class="tab" id="mapsTab" type="button" role="tab" aria-selected="false">Maps</button>
+            <button class="tab" id="modesTab" type="button" role="tab" aria-selected="false">Modes</button>
+            <button class="tab" id="generalTab" type="button" role="tab" aria-selected="false">General</button>
+            <button class="tab" id="rawTab" type="button" role="tab" aria-selected="false">Raw JSON</button>
+          </div>
+
+          <div id="agentsPanel">
+            <h2>Agents <span class="count" id="agentsCount"></span></h2>
+            <div class="add-row">
+              <input id="agentInput" placeholder="Agent name">
+              <button id="addAgentButton" type="button">追加</button>
+            </div>
+            <div id="agentsList"></div>
+          </div>
+
+          <div class="hidden" id="mapsPanel">
+            <h2>Maps <span class="count" id="mapsCount"></span></h2>
+            <div class="add-row">
+              <input id="mapInput" placeholder="Map name">
+              <button id="addMapButton" type="button">追加</button>
+            </div>
+            <div id="mapsList"></div>
+          </div>
+
+          <div class="hidden" id="modesPanel">
+            <h2>Modes <span class="count" id="modesCount"></span></h2>
+            <div class="mode-row">
+              <input id="modeLabelInput" placeholder="Label">
+              <input id="modeValueInput" placeholder="Value">
+              <button id="addModeButton" type="button">追加</button>
+            </div>
+            <div id="modesList"></div>
+          </div>
+
+          <div class="hidden" id="generalPanel">
+            <h2>General</h2>
+            <div class="grid">
+              <div>
+                <label for="roleNameInput">Role name</label>
+                <input id="roleNameInput">
+              </div>
+              <div>
+                <label for="customModeValueInput">Custom mode value</label>
+                <input id="customModeValueInput">
+              </div>
+              <div>
+                <label for="maxPlayersInput">Max selected players</label>
+                <input id="maxPlayersInput" type="number" min="1" max="25">
+              </div>
+              <div>
+                <label for="pageSizeInput">Player select page size</label>
+                <input id="pageSizeInput" type="number" min="1" max="25">
+              </div>
+              <div>
+                <label for="timeoutInput">Setup timeout seconds</label>
+                <input id="timeoutInput" type="number" min="1">
+              </div>
+              <div>
+                <label for="noteMaxInput">Note max length</label>
+                <input id="noteMaxInput" type="number" min="1" max="1000">
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden" id="rawPanel">
+            <h2>Raw JSON</h2>
+            <textarea id="rawJsonInput" spellcheck="false"></textarea>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const defaultConfig = {
+        role_name: "Valorant Player",
+        custom_mode_value: "custom",
+        max_selected_players: 10,
+        player_select_page_size: 25,
+        setup_timeout_seconds: 180,
+        note_max_length: 1000,
+        modes: [],
+        maps: [],
+        agents: []
+      };
+
+      const state = {
+        config: structuredClone(defaultConfig),
+        activePanel: "agents",
+        remoteSha: null
+      };
+
+      const elements = {
+        ownerInput: document.querySelector("#ownerInput"),
+        repoInput: document.querySelector("#repoInput"),
+        branchInput: document.querySelector("#branchInput"),
+        pathInput: document.querySelector("#pathInput"),
+        tokenInput: document.querySelector("#tokenInput"),
+        messageInput: document.querySelector("#messageInput"),
+        statusText: document.querySelector("#statusText"),
+        summaryText: document.querySelector("#summaryText"),
+        agentsList: document.querySelector("#agentsList"),
+        mapsList: document.querySelector("#mapsList"),
+        modesList: document.querySelector("#modesList"),
+        agentsCount: document.querySelector("#agentsCount"),
+        mapsCount: document.querySelector("#mapsCount"),
+        modesCount: document.querySelector("#modesCount"),
+        agentInput: document.querySelector("#agentInput"),
+        mapInput: document.querySelector("#mapInput"),
+        modeLabelInput: document.querySelector("#modeLabelInput"),
+        modeValueInput: document.querySelector("#modeValueInput"),
+        roleNameInput: document.querySelector("#roleNameInput"),
+        customModeValueInput: document.querySelector("#customModeValueInput"),
+        maxPlayersInput: document.querySelector("#maxPlayersInput"),
+        pageSizeInput: document.querySelector("#pageSizeInput"),
+        timeoutInput: document.querySelector("#timeoutInput"),
+        noteMaxInput: document.querySelector("#noteMaxInput"),
+        rawJsonInput: document.querySelector("#rawJsonInput")
+      };
+
+      function setStatus(message, tone = "") {
+        elements.statusText.textContent = message;
+        elements.statusText.className = `status ${tone}`.trim();
+      }
+
+      function cleanText(value) {
+        return String(value ?? "").trim();
+      }
+
+      function toPositiveInteger(value, fallback) {
+        const parsedValue = Number.parseInt(value, 10);
+        if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+          return fallback;
+        }
+        return parsedValue;
+      }
+
+      function uniqueValues(values) {
+        const seenValues = new Set();
+        const uniqueItems = [];
+        for (const value of values) {
+          const cleanedValue = cleanText(value);
+          const key = cleanedValue.toLocaleLowerCase();
+          if (!cleanedValue || seenValues.has(key)) {
+            continue;
+          }
+          seenValues.add(key);
+          uniqueItems.push(cleanedValue);
+        }
+        return uniqueItems;
+      }
+
+      function normalizeConfig(rawConfig) {
+        const nextConfig = { ...defaultConfig, ...rawConfig };
+        nextConfig.modes = Array.isArray(rawConfig.modes) ? rawConfig.modes : [];
+        nextConfig.modes = nextConfig.modes
+          .map((mode) => ({
+            label: cleanText(mode.label),
+            value: cleanText(mode.value)
+          }))
+          .filter((mode) => mode.label && mode.value);
+        nextConfig.maps = uniqueValues(Array.isArray(rawConfig.maps) ? rawConfig.maps : []);
+        nextConfig.agents = uniqueValues(Array.isArray(rawConfig.agents) ? rawConfig.agents : []);
+        nextConfig.role_name = cleanText(nextConfig.role_name) || defaultConfig.role_name;
+        nextConfig.custom_mode_value = cleanText(nextConfig.custom_mode_value) || defaultConfig.custom_mode_value;
+        nextConfig.max_selected_players = Math.min(
+          25,
+          toPositiveInteger(nextConfig.max_selected_players, defaultConfig.max_selected_players)
+        );
+        nextConfig.player_select_page_size = Math.min(
+          25,
+          toPositiveInteger(nextConfig.player_select_page_size, defaultConfig.player_select_page_size)
+        );
+        nextConfig.setup_timeout_seconds = toPositiveInteger(
+          nextConfig.setup_timeout_seconds,
+          defaultConfig.setup_timeout_seconds
+        );
+        nextConfig.note_max_length = Math.min(
+          1000,
+          toPositiveInteger(nextConfig.note_max_length, defaultConfig.note_max_length)
+        );
+        return nextConfig;
+      }
+
+      function readGeneralInputs() {
+        state.config.role_name = cleanText(elements.roleNameInput.value) || defaultConfig.role_name;
+        state.config.custom_mode_value = cleanText(elements.customModeValueInput.value) || defaultConfig.custom_mode_value;
+        state.config.max_selected_players = Math.min(
+          25,
+          toPositiveInteger(elements.maxPlayersInput.value, defaultConfig.max_selected_players)
+        );
+        state.config.player_select_page_size = Math.min(
+          25,
+          toPositiveInteger(elements.pageSizeInput.value, defaultConfig.player_select_page_size)
+        );
+        state.config.setup_timeout_seconds = toPositiveInteger(
+          elements.timeoutInput.value,
+          defaultConfig.setup_timeout_seconds
+        );
+        state.config.note_max_length = Math.min(
+          1000,
+          toPositiveInteger(elements.noteMaxInput.value, defaultConfig.note_max_length)
+        );
+      }
+
+      function applyRawJsonIfActive() {
+        if (state.activePanel !== "raw") {
+          return true;
+        }
+
+        try {
+          state.config = normalizeConfig(JSON.parse(elements.rawJsonInput.value));
+          return true;
+        } catch (error) {
+          setStatus(`JSONの形式が正しくありません: ${error.message}`, "bad");
+          return false;
+        }
+      }
+
+      function renderItemList(container, items, onChange, onRemove) {
+        container.replaceChildren();
+        items.forEach((item, itemIndex) => {
+          const row = document.createElement("div");
+          row.className = "item-row";
+
+          const input = document.createElement("input");
+          input.value = item;
+          input.addEventListener("input", () => {
+            onChange(itemIndex, input.value);
+          });
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "danger";
+          removeButton.textContent = "削除";
+          removeButton.addEventListener("click", () => onRemove(itemIndex));
+
+          row.append(input, removeButton);
+          container.append(row);
+        });
+      }
+
+      function renderModesList() {
+        elements.modesList.replaceChildren();
+        state.config.modes.forEach((mode, modeIndex) => {
+          const row = document.createElement("div");
+          row.className = "mode-row";
+
+          const labelInput = document.createElement("input");
+          labelInput.value = mode.label;
+          labelInput.addEventListener("input", () => {
+            state.config.modes[modeIndex].label = labelInput.value;
+            renderRawJson();
+          });
+
+          const valueInput = document.createElement("input");
+          valueInput.value = mode.value;
+          valueInput.addEventListener("input", () => {
+            state.config.modes[modeIndex].value = valueInput.value;
+            renderRawJson();
+          });
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "danger";
+          removeButton.textContent = "削除";
+          removeButton.addEventListener("click", () => {
+            state.config.modes.splice(modeIndex, 1);
+            renderAll();
+          });
+
+          row.append(labelInput, valueInput, removeButton);
+          elements.modesList.append(row);
+        });
+      }
+
+      function renderGeneral() {
+        elements.roleNameInput.value = state.config.role_name;
+        elements.customModeValueInput.value = state.config.custom_mode_value;
+        elements.maxPlayersInput.value = state.config.max_selected_players;
+        elements.pageSizeInput.value = state.config.player_select_page_size;
+        elements.timeoutInput.value = state.config.setup_timeout_seconds;
+        elements.noteMaxInput.value = state.config.note_max_length;
+      }
+
+      function renderRawJson() {
+        elements.rawJsonInput.value = JSON.stringify(state.config, null, 2);
+      }
+
+      function renderSummary() {
+        elements.agentsCount.textContent = `${state.config.agents.length}件`;
+        elements.mapsCount.textContent = `${state.config.maps.length}件`;
+        elements.modesCount.textContent = `${state.config.modes.length}件`;
+        elements.summaryText.textContent =
+          `Agents ${state.config.agents.length} / Maps ${state.config.maps.length} / Modes ${state.config.modes.length}`;
+      }
+
+      function renderAll() {
+        state.config = normalizeConfig(state.config);
+        renderItemList(
+          elements.agentsList,
+          state.config.agents,
+          (index, value) => {
+            state.config.agents[index] = value;
+            renderRawJson();
+          },
+          (index) => {
+            state.config.agents.splice(index, 1);
+            renderAll();
+          }
+        );
+        renderItemList(
+          elements.mapsList,
+          state.config.maps,
+          (index, value) => {
+            state.config.maps[index] = value;
+            renderRawJson();
+          },
+          (index) => {
+            state.config.maps.splice(index, 1);
+            renderAll();
+          }
+        );
+        renderModesList();
+        renderGeneral();
+        renderRawJson();
+        renderSummary();
+      }
+
+      function switchPanel(panelName) {
+        readGeneralInputs();
+        if (!applyRawJsonIfActive()) {
+          return;
+        }
+
+        state.activePanel = panelName;
+        for (const panel of ["agents", "maps", "modes", "general", "raw"]) {
+          document.querySelector(`#${panel}Panel`).classList.toggle("hidden", panel !== panelName);
+          document.querySelector(`#${panel}Tab`).setAttribute("aria-selected", String(panel === panelName));
+        }
+        renderAll();
+      }
+
+      function addSimpleItem(fieldName, inputElement) {
+        const nextValue = cleanText(inputElement.value);
+        if (!nextValue) {
+          return;
+        }
+        state.config[fieldName].push(nextValue);
+        inputElement.value = "";
+        renderAll();
+      }
+
+      function encodeBase64Utf8(text) {
+        const bytes = new TextEncoder().encode(text);
+        let binaryText = "";
+        for (const byte of bytes) {
+          binaryText += String.fromCharCode(byte);
+        }
+        return btoa(binaryText);
+      }
+
+      function decodeBase64Utf8(text) {
+        const binaryText = atob(text.replace(/\s/g, ""));
+        const bytes = new Uint8Array(binaryText.length);
+        for (let index = 0; index < binaryText.length; index += 1) {
+          bytes[index] = binaryText.charCodeAt(index);
+        }
+        return new TextDecoder().decode(bytes);
+      }
+
+      function getRepositorySettings() {
+        const settings = {
+          owner: cleanText(elements.ownerInput.value),
+          repo: cleanText(elements.repoInput.value),
+          branch: cleanText(elements.branchInput.value) || "main",
+          path: cleanText(elements.pathInput.value) || "data/valorant_config.json",
+          token: elements.tokenInput.value,
+          message: cleanText(elements.messageInput.value) || "Update Valorant config from Pages editor"
+        };
+        localStorage.setItem("valomaster-pages-settings", JSON.stringify({
+          owner: settings.owner,
+          repo: settings.repo,
+          branch: settings.branch,
+          path: settings.path,
+          message: settings.message
+        }));
+        return settings;
+      }
+
+      function restoreRepositorySettings() {
+        const savedSettings = localStorage.getItem("valomaster-pages-settings");
+        if (!savedSettings) {
+          return;
+        }
+
+        try {
+          const settings = JSON.parse(savedSettings);
+          elements.ownerInput.value = settings.owner || "";
+          elements.repoInput.value = settings.repo || "";
+          elements.branchInput.value = settings.branch || "main";
+          elements.pathInput.value = settings.path || "data/valorant_config.json";
+          elements.messageInput.value = settings.message || "Update Valorant config from Pages editor";
+        } catch {
+          localStorage.removeItem("valomaster-pages-settings");
+        }
+      }
+
+      function createGitHubHeaders(token) {
+        const headers = {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2026-03-10"
+        };
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        return headers;
+      }
+
+      async function fetchGitHubConfig(settings) {
+        const url = new URL(`https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${settings.path}`);
+        url.searchParams.set("ref", settings.branch);
+        const response = await fetch(url, {
+          headers: createGitHubHeaders(settings.token)
+        });
+        if (!response.ok) {
+          throw new Error(`GitHubから読み込めませんでした: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        state.remoteSha = payload.sha;
+        return JSON.parse(decodeBase64Utf8(payload.content));
+      }
+
+      async function commitGitHubConfig(settings) {
+        if (!settings.owner || !settings.repo || !settings.token) {
+          throw new Error("Owner、Repository、GitHub token を入力してください。");
+        }
+
+        const currentConfig = await fetchGitHubConfig(settings);
+        state.config = normalizeConfig({ ...currentConfig, ...state.config });
+        const content = encodeBase64Utf8(`${JSON.stringify(state.config, null, 2)}\n`);
+        const response = await fetch(
+          `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${settings.path}`,
+          {
+            method: "PUT",
+            headers: createGitHubHeaders(settings.token),
+            body: JSON.stringify({
+              message: settings.message,
+              content,
+              sha: state.remoteSha,
+              branch: settings.branch
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`GitHubへ反映できませんでした: ${response.status} ${errorText}`);
+        }
+
+        const payload = await response.json();
+        state.remoteSha = payload.content.sha;
+      }
+
+      async function loadPublicConfig() {
+        const response = await fetch("data/valorant_config.json", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Pagesから読み込めませんでした: ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function downloadJson() {
+        readGeneralInputs();
+        if (!applyRawJsonIfActive()) {
+          return;
+        }
+
+        state.config = normalizeConfig(state.config);
+        const blob = new Blob([`${JSON.stringify(state.config, null, 2)}\n`], {
+          type: "application/json"
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "valorant_config.json";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      document.querySelectorAll(".tab").forEach((tabButton) => {
+        tabButton.addEventListener("click", () => {
+          switchPanel(tabButton.id.replace("Tab", ""));
+        });
+      });
+
+      document.querySelector("#loadPublicButton").addEventListener("click", async () => {
+        try {
+          state.config = normalizeConfig(await loadPublicConfig());
+          state.remoteSha = null;
+          renderAll();
+          setStatus("Pagesから読み込みました。", "ok");
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      });
+
+      document.querySelector("#downloadButton").addEventListener("click", downloadJson);
+
+      document.querySelector("#commitButton").addEventListener("click", async () => {
+        readGeneralInputs();
+        if (!applyRawJsonIfActive()) {
+          return;
+        }
+
+        try {
+          await commitGitHubConfig(getRepositorySettings());
+          renderAll();
+          setStatus("GitHubへ反映しました。", "ok");
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      });
+
+      document.querySelector("#addAgentButton").addEventListener("click", () => {
+        addSimpleItem("agents", elements.agentInput);
+      });
+
+      document.querySelector("#addMapButton").addEventListener("click", () => {
+        addSimpleItem("maps", elements.mapInput);
+      });
+
+      document.querySelector("#addModeButton").addEventListener("click", () => {
+        const label = cleanText(elements.modeLabelInput.value);
+        const value = cleanText(elements.modeValueInput.value);
+        if (!label || !value) {
+          return;
+        }
+        state.config.modes.push({ label, value });
+        elements.modeLabelInput.value = "";
+        elements.modeValueInput.value = "";
+        renderAll();
+      });
+
+      [
+        elements.roleNameInput,
+        elements.customModeValueInput,
+        elements.maxPlayersInput,
+        elements.pageSizeInput,
+        elements.timeoutInput,
+        elements.noteMaxInput
+      ].forEach((inputElement) => {
+        inputElement.addEventListener("input", () => {
+          readGeneralInputs();
+          renderRawJson();
+          renderSummary();
+        });
+      });
+
+      restoreRepositorySettings();
+      renderAll();
+      loadPublicConfig()
+        .then((config) => {
+          state.config = normalizeConfig(config);
+          renderAll();
+          setStatus("Pages設定を読み込みました。", "ok");
+        })
+        .catch(() => {
+          setStatus("ローカルの既定値で開始しました。");
+        });
+    </script>
+  </body>
+</html>
