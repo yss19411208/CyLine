@@ -1,0 +1,27 @@
+{
+  "ability": "cage",
+  "ability_label": "サイバーケージ",
+  "author": {
+    "display_name": "harima1954",
+    "source": "discord",
+    "user_id": "1215830583209492520"
+  },
+  "created_at": "2026-06-30T16:54:00+00:00",
+  "data_path": "data/lineups/20260630T165400Z-3aa21b99.json",
+  "description": "",
+  "detected_position": {
+    "confidence": 0.65,
+    "method": "top_left_minimap_bright_marker",
+    "needs_review": false,
+    "note": "左上のミニマップ候補から推定した初期版の結果です。回転したミニマップを高精度に扱うには、マップ別テンプレートが必要です。",
+    "x_percent": 33.57,
+    "y_percent": 57.96
+  },
+  "id": "20260630T165400Z-3aa21b99",
+  "image_path": "assets/lineups/20260630T165400Z-3aa21b99.png",
+  "jump": true,
+  "jump_label": "ジャンプあり",
+  "map": "Bind",
+  "schema_version": 1,
+  "title": ""
+}
