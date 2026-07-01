@@ -10,12 +10,12 @@
   "data_path": "data/lineups/20260701T021144Z-5c0f1605.json",
   "description": "",
   "detected_position": {
-    "confidence": 0.82,
+    "confidence": 0.92,
     "method": "top_left_minimap_marker",
     "needs_review": false,
     "note": "左上のミニマップからプレイヤーマーカー候補を検出しました。",
-    "x_percent": 27.72,
-    "y_percent": 92.19
+    "x_percent": 69.67,
+    "y_percent": 31.52
   },
   "id": "20260701T021144Z-5c0f1605",
   "image_path": "assets/lineups/20260701T021144Z-5c0f1605.webp",
@@ -23,16 +23,16 @@
   "jump_label": "ジャンプなし",
   "map": "Ascent",
   "map_position": {
-    "confidence": 0.41,
+    "confidence": 0.46,
     "map_image_height": 1024,
     "map_image_width": 1024,
-    "method": "corrected_minimap_crop",
+    "method": "corrected_player_pin_marker",
     "needs_review": true,
     "orientation": "attacker_up",
-    "x": 283.85,
-    "x_percent": 27.72,
-    "y": 944.03,
-    "y_percent": 92.19
+    "x": 310.58,
+    "x_percent": 30.33,
+    "y": 701.24,
+    "y_percent": 68.48
   },
   "schema_version": 1,
   "title": ""

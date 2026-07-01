@@ -199,77 +199,79 @@ def _crop_likely_minimap(rgb_image):
 
 
 def _find_player_marker(rgb_image):
+    pin_marker = _find_red_white_pin_marker(rgb_image)
+    if pin_marker is not None:
+        return pin_marker
+
+    compact_marker = _find_compact_bright_marker(rgb_image)
+    if compact_marker is not None:
+        return compact_marker
+
+    return None
+
+
+def _find_red_white_pin_marker(rgb_image):
     image_width, image_height = rgb_image.size
     pixel_access = rgb_image.load()
-    search_step = max(1, min(image_width, image_height) // 260)
 
-    marker_candidates: list[tuple[float, float, float]] = []
-    for pixel_y in range(0, image_height, search_step):
-        for pixel_x in range(0, image_width, search_step):
+    red_pixels: list[tuple[int, int]] = []
+    for pixel_y in range(image_height):
+        for pixel_x in range(image_width):
             red_value, green_value, blue_value = pixel_access[pixel_x, pixel_y]
             brightness = (red_value + green_value + blue_value) / 3
             saturation = _saturation(red_value, green_value, blue_value)
 
-            is_yellow_green = (
-                green_value >= 120
-                and red_value >= 110
-                and blue_value <= 140
-                and saturation >= 0.22
+            is_red_pin_accent = (
+                brightness >= 80
+                and red_value >= 135
+                and red_value >= green_value + 18
+                and red_value >= blue_value + 18
+                and saturation >= 0.16
             )
-            is_clean_white_marker = (
-                brightness >= 210
-                and saturation <= 0.2
-                and min(red_value, green_value, blue_value) >= 185
-            )
+            if is_red_pin_accent:
+                red_pixels.append((pixel_x, pixel_y))
 
-            if not is_yellow_green and not is_clean_white_marker:
-                continue
+    best_marker = None
+    for red_component in _connected_components(red_pixels, image_width, image_height):
+        red_count = len(red_component)
+        red_min_x, red_min_y, red_max_x, red_max_y = _component_bounds(red_component)
+        red_width = red_max_x - red_min_x + 1
+        red_height = red_max_y - red_min_y + 1
+        if red_count < 3 or red_count > 120 or red_width > 22 or red_height > 22:
+            continue
 
-            edge_margin = min(pixel_x, pixel_y, image_width - pixel_x, image_height - pixel_y)
-            if edge_margin < 8:
-                continue
+        edge_margin = min(red_min_x, red_min_y, image_width - red_max_x, image_height - red_max_y)
+        if edge_margin < 5:
+            continue
 
-            marker_weight = 1.0
-            if is_yellow_green:
-                marker_weight += saturation * 2
-            if pixel_y > image_height * 0.42:
-                marker_weight += 0.6
+        white_pixels = _nearby_white_pin_pixels(
+            pixel_access,
+            image_width,
+            image_height,
+            red_min_x,
+            red_min_y,
+            red_max_x,
+            red_max_y,
+        )
+        if len(white_pixels) < 20:
+            continue
 
-            marker_candidates.append((float(pixel_x), float(pixel_y), marker_weight))
+        combined_pixels = [(x, y, 2.0) for x, y in red_component]
+        combined_pixels.extend((x, y, 1.0) for x, y in white_pixels)
+        weight_sum = sum(weight for _x, _y, weight in combined_pixels)
+        marker_x = sum(x * weight for x, _y, weight in combined_pixels) / weight_sum
+        marker_y = sum(y * weight for _x, y, weight in combined_pixels) / weight_sum
+        marker_score = red_count * 2.0 + min(len(white_pixels), 220) * 0.35
+        confidence = round(min(0.62 + red_count / 80 + len(white_pixels) / 420, 0.92), 2)
+        candidate = (marker_score, marker_x, marker_y, confidence)
+        if best_marker is None or candidate[0] > best_marker[0]:
+            best_marker = candidate
 
-    if not marker_candidates:
-        return _find_bright_marker(rgb_image)
+    if best_marker is None:
+        return None
 
-    clustered_candidates = _largest_marker_cluster(marker_candidates)
-    if not clustered_candidates:
-        return _find_bright_marker(rgb_image)
-
-    weight_sum = sum(candidate[2] for candidate in clustered_candidates)
-    marker_x = sum(candidate[0] * candidate[2] for candidate in clustered_candidates) / weight_sum
-    marker_y = sum(candidate[1] * candidate[2] for candidate in clustered_candidates) / weight_sum
-    confidence = round(min(0.35 + len(clustered_candidates) / 90 + weight_sum / 380, 0.82), 2)
+    _marker_score, marker_x, marker_y, confidence = best_marker
     return marker_x, marker_y, confidence
-
-
-def _largest_marker_cluster(candidates: list[tuple[float, float, float]]):
-    clusters: list[list[tuple[float, float, float]]] = []
-    for candidate in candidates:
-        candidate_x, candidate_y, _candidate_weight = candidate
-        matched_cluster = None
-        for cluster in clusters:
-            cluster_x = sum(point[0] for point in cluster) / len(cluster)
-            cluster_y = sum(point[1] for point in cluster) / len(cluster)
-            if abs(candidate_x - cluster_x) <= 18 and abs(candidate_y - cluster_y) <= 18:
-                matched_cluster = cluster
-                break
-        if matched_cluster is None:
-            clusters.append([candidate])
-        else:
-            matched_cluster.append(candidate)
-
-    if not clusters:
-        return []
-    return max(clusters, key=lambda cluster: (len(cluster), sum(point[2] for point in cluster)))
 
 
 def _saturation(red_value: int, green_value: int, blue_value: int) -> float:
@@ -280,44 +282,118 @@ def _saturation(red_value: int, green_value: int, blue_value: int) -> float:
     return (max_channel - min_channel) / max_channel
 
 
-def _find_bright_marker(rgb_image):
+def _connected_components(
+    pixels: list[tuple[int, int]],
+    image_width: int,
+    image_height: int,
+) -> list[list[tuple[int, int]]]:
+    pixel_set = set(pixels)
+    components: list[list[tuple[int, int]]] = []
+
+    while pixel_set:
+        start_pixel = pixel_set.pop()
+        stack = [start_pixel]
+        component = [start_pixel]
+        while stack:
+            current_x, current_y = stack.pop()
+            for neighbor_y in range(current_y - 1, current_y + 2):
+                for neighbor_x in range(current_x - 1, current_x + 2):
+                    if (
+                        0 <= neighbor_x < image_width
+                        and 0 <= neighbor_y < image_height
+                        and (neighbor_x, neighbor_y) in pixel_set
+                    ):
+                        pixel_set.remove((neighbor_x, neighbor_y))
+                        stack.append((neighbor_x, neighbor_y))
+                        component.append((neighbor_x, neighbor_y))
+        components.append(component)
+
+    return components
+
+
+def _component_bounds(component: list[tuple[int, int]]) -> tuple[int, int, int, int]:
+    x_values = [pixel[0] for pixel in component]
+    y_values = [pixel[1] for pixel in component]
+    return min(x_values), min(y_values), max(x_values), max(y_values)
+
+
+def _nearby_white_pin_pixels(
+    pixel_access,
+    image_width: int,
+    image_height: int,
+    red_min_x: int,
+    red_min_y: int,
+    red_max_x: int,
+    red_max_y: int,
+) -> list[tuple[int, int]]:
+    search_min_x = max(0, red_min_x - 16)
+    search_min_y = max(0, red_min_y - 16)
+    search_max_x = min(image_width - 1, red_max_x + 16)
+    search_max_y = min(image_height - 1, red_max_y + 18)
+    white_pixels: list[tuple[int, int]] = []
+
+    for pixel_y in range(search_min_y, search_max_y + 1):
+        for pixel_x in range(search_min_x, search_max_x + 1):
+            red_value, green_value, blue_value = pixel_access[pixel_x, pixel_y]
+            brightness = (red_value + green_value + blue_value) / 3
+            saturation = _saturation(red_value, green_value, blue_value)
+            channel_spread = max(red_value, green_value, blue_value) - min(
+                red_value,
+                green_value,
+                blue_value,
+            )
+            is_pin_white = (
+                brightness >= 165
+                and saturation <= 0.34
+                and channel_spread <= 95
+            )
+            if is_pin_white:
+                white_pixels.append((pixel_x, pixel_y))
+
+    return white_pixels
+
+
+def _find_compact_bright_marker(rgb_image):
     image_width, image_height = rgb_image.size
     pixel_access = rgb_image.load()
-    search_step = max(1, min(image_width, image_height) // 220)
+    bright_pixels: list[tuple[int, int]] = []
 
-    weighted_x_sum = 0.0
-    weighted_y_sum = 0.0
-    weight_sum = 0.0
-    strongest_weight = 0.0
-
-    for pixel_y in range(0, image_height, search_step):
-        for pixel_x in range(0, image_width, search_step):
+    for pixel_y in range(image_height):
+        for pixel_x in range(image_width):
             red_value, green_value, blue_value = pixel_access[pixel_x, pixel_y]
             brightness = (red_value + green_value + blue_value) / 3
             channel_spread = max(red_value, green_value, blue_value) - min(
                 red_value, green_value, blue_value
             )
 
-            if brightness < 185 or channel_spread > 95:
-                continue
+            if brightness >= 185 and channel_spread <= 80:
+                bright_pixels.append((pixel_x, pixel_y))
 
-            edge_margin = min(pixel_x, pixel_y, image_width - pixel_x, image_height - pixel_y)
-            if edge_margin < 8:
-                continue
+    best_component = None
+    for component in _connected_components(bright_pixels, image_width, image_height):
+        component_size = len(component)
+        min_x, min_y, max_x, max_y = _component_bounds(component)
+        component_width = max_x - min_x + 1
+        component_height = max_y - min_y + 1
+        edge_margin = min(min_x, min_y, image_width - max_x, image_height - max_y)
+        if (
+            12 <= component_size <= 260
+            and component_width <= 28
+            and component_height <= 28
+            and edge_margin >= 5
+        ):
+            score = component_size - abs(component_width - component_height) * 2
+            candidate = (score, component)
+            if best_component is None or candidate[0] > best_component[0]:
+                best_component = candidate
 
-            weight = (brightness - 184) / 71
-            weighted_x_sum += pixel_x * weight
-            weighted_y_sum += pixel_y * weight
-            weight_sum += weight
-            strongest_weight = max(strongest_weight, weight)
-
-    if weight_sum <= 0:
+    if best_component is None:
         return None
 
-    marker_x = weighted_x_sum / weight_sum
-    marker_y = weighted_y_sum / weight_sum
-    density_score = min(weight_sum / 240, 1.0)
-    confidence = round(min(0.2 + density_score * 0.45 + strongest_weight * 0.2, 0.65), 2)
+    _score, component = best_component
+    marker_x = sum(pixel[0] for pixel in component) / len(component)
+    marker_y = sum(pixel[1] for pixel in component) / len(component)
+    confidence = round(min(0.48 + len(component) / 420, 0.72), 2)
     return marker_x, marker_y, confidence
 
 
@@ -337,7 +413,7 @@ def _estimate_map_position_from_template(
         import cv2
         import numpy as np
     except ImportError:
-        return _build_map_position(
+        return _build_fallback_map_position(
             x_percent=fallback_x_percent,
             y_percent=fallback_y_percent,
             map_width=map_width,
@@ -345,6 +421,7 @@ def _estimate_map_position_from_template(
             confidence=round(marker_confidence * 0.5, 2),
             needs_review=True,
             method="marker_percent_without_opencv",
+            valorant_map=valorant_map,
         )
 
     crop_array = np.array(minimap_crop.convert("RGB"))
@@ -352,7 +429,7 @@ def _estimate_map_position_from_template(
     map_asset_path = get_map_asset_path(maps_dir, valorant_map)
     template_image = _load_template_image(map_asset_path, valorant_map, cv2, np)
     if template_image is None:
-        return _build_map_position(
+        return _build_fallback_map_position(
             x_percent=fallback_x_percent,
             y_percent=fallback_y_percent,
             map_width=map_width,
@@ -360,12 +437,13 @@ def _estimate_map_position_from_template(
             confidence=round(marker_confidence * 0.45, 2),
             needs_review=True,
             method="marker_percent_unreadable_map_asset",
+            valorant_map=valorant_map,
         )
 
     template_mask = _build_template_shape_mask(template_image, cv2, np)
     best_match = _find_best_template_match(crop_mask, template_mask, cv2)
     if best_match is None:
-        return _build_map_position(
+        return _build_fallback_map_position(
             x_percent=fallback_x_percent,
             y_percent=fallback_y_percent,
             map_width=map_width,
@@ -373,6 +451,7 @@ def _estimate_map_position_from_template(
             confidence=round(marker_confidence * 0.45, 2),
             needs_review=True,
             method="marker_percent_no_template_match",
+            valorant_map=valorant_map,
         )
 
     match_x, match_y, match_size, score, operations = best_match
@@ -401,7 +480,7 @@ def _estimate_map_position_from_template(
     )
 
     if needs_review:
-        return _build_map_position(
+        return _build_fallback_map_position(
             x_percent=fallback_x_percent,
             y_percent=fallback_y_percent,
             map_width=map_width,
@@ -409,6 +488,7 @@ def _estimate_map_position_from_template(
             confidence=round(marker_confidence * 0.5, 2),
             needs_review=True,
             method=f"marker_percent_low_template_confidence:{'+'.join(operations) or 'identity'}",
+            valorant_map=valorant_map,
         )
 
     return _build_map_position(
@@ -470,7 +550,7 @@ def _find_best_template_match(crop_mask, template_mask, cv2):
     candidate_sizes = sorted(
         {
             int(maximum_size * ratio)
-            for ratio in (0.58, 0.66, 0.74, 0.82, 0.9, 0.98)
+            for ratio in (0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0)
             if int(maximum_size * ratio) >= 90
         }
     )
@@ -503,23 +583,36 @@ def _find_best_template_match(crop_mask, template_mask, cv2):
 
 
 def _orientation_operations() -> list[tuple[str, ...]]:
-    return [
+    operations: list[tuple[str, ...]] = []
+    flip_sets = [
         tuple(),
-        ("rot90",),
-        ("rot90", "rot90"),
-        ("rot90", "rot90", "rot90"),
         ("flip_h",),
         ("flip_v",),
-        ("flip_h", "rot90"),
-        ("flip_v", "rot90"),
+        ("flip_h", "flip_v"),
     ]
+    for angle in range(0, 360, 15):
+        rotation = tuple() if angle == 0 else (f"rot:{angle}",)
+        for flip_set in flip_sets:
+            operations.append(flip_set + rotation)
+    return operations
 
 
 def _apply_template_operations(template_mask, operations: tuple[str, ...], cv2):
     transformed_template = template_mask
     for operation in operations:
-        if operation == "rot90":
-            transformed_template = cv2.rotate(transformed_template, cv2.ROTATE_90_CLOCKWISE)
+        if operation.startswith("rot:"):
+            angle = float(operation.split(":", 1)[1])
+            template_height, template_width = transformed_template.shape[:2]
+            center = (template_width / 2, template_height / 2)
+            rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+            transformed_template = cv2.warpAffine(
+                transformed_template,
+                rotation_matrix,
+                (template_width, template_height),
+                flags=cv2.INTER_NEAREST,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=0,
+            )
         elif operation == "flip_h":
             transformed_template = cv2.flip(transformed_template, 1)
         elif operation == "flip_v":
@@ -535,13 +628,35 @@ def _invert_operations(
     base_x_percent = x_percent
     base_y_percent = y_percent
     for operation in reversed(operations):
-        if operation == "rot90":
-            base_x_percent, base_y_percent = base_y_percent, 100 - base_x_percent
+        if operation.startswith("rot:"):
+            angle = float(operation.split(":", 1)[1])
+            base_x_percent, base_y_percent = _rotate_percent_point(
+                base_x_percent,
+                base_y_percent,
+                -angle,
+            )
         elif operation == "flip_h":
             base_x_percent = 100 - base_x_percent
         elif operation == "flip_v":
             base_y_percent = 100 - base_y_percent
     return base_x_percent, base_y_percent
+
+
+def _rotate_percent_point(
+    x_percent: float,
+    y_percent: float,
+    angle_degrees: float,
+) -> tuple[float, float]:
+    import math
+
+    radians = math.radians(angle_degrees)
+    cos_value = math.cos(radians)
+    sin_value = math.sin(radians)
+    centered_x = x_percent - 50.0
+    centered_y = y_percent - 50.0
+    rotated_x = centered_x * cos_value + centered_y * sin_value
+    rotated_y = -centered_x * sin_value + centered_y * cos_value
+    return rotated_x + 50.0, rotated_y + 50.0
 
 
 def _apply_attacker_up_transform(
@@ -592,6 +707,34 @@ def _build_map_position(
         map_image_width=map_width,
         map_image_height=map_height,
         orientation="attacker_up",
+        confidence=confidence,
+        needs_review=needs_review,
+        method=method,
+    )
+
+
+def _build_fallback_map_position(
+    x_percent: float | None,
+    y_percent: float | None,
+    map_width: int | None,
+    map_height: int | None,
+    confidence: float,
+    needs_review: bool,
+    method: str,
+    valorant_map: str,
+) -> MapPosition:
+    if x_percent is not None and y_percent is not None:
+        x_percent, y_percent = _apply_attacker_up_transform(
+            x_percent,
+            y_percent,
+            valorant_map,
+        )
+
+    return _build_map_position(
+        x_percent=x_percent,
+        y_percent=y_percent,
+        map_width=map_width,
+        map_height=map_height,
         confidence=confidence,
         needs_review=needs_review,
         method=method,

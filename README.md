@@ -188,9 +188,10 @@ until each map is visually calibrated.
 ## Minimap detection status
 
 The detector is intentionally conservative. It crops the likely top-left
-minimap area, searches for the player marker, then tries to match the selected
-map template while considering rotation, flips, and scale differences. The
-result is saved with `confidence` and `needs_review`.
+minimap area, searches for the red/white player pin instead of the yellow spike
+icon, then tries to match the selected map template while considering rotation,
+flips, and scale differences. The result is saved with `confidence` and
+`needs_review`.
 
 If OpenCV is unavailable or matching confidence is low, the lineup is saved with
 `needs_review=true` and can still be manually corrected.
