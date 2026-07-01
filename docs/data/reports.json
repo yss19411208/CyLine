@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-07-01T05:32:48+00:00",
+  "reports": [
+    {
+      "created_at": "2026-07-01T05:32:48+00:00",
+      "data_path": "data/reports/20260701T053248Z-6915e842.json",
+      "id": "20260701T053248Z-6915e842",
+      "lineup_id": "20260701T021144Z-5c0f1605",
+      "lineup_map": "Ascent",
+      "lineup_title": "",
+      "message": "okasii",
+      "reason": "座標が違う",
+      "reporter_name": "",
+      "schema_version": 1,
+      "status": "open"
+    }
+  ],
+  "schema_version": 1
+}
