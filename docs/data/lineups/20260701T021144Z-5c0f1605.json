@@ -1,0 +1,39 @@
+{
+  "ability": "camera",
+  "ability_label": "スパイカメラ",
+  "author": {
+    "display_name": "Anonymous",
+    "source": "web",
+    "user_id": "anonymous"
+  },
+  "created_at": "2026-07-01T02:11:44+00:00",
+  "data_path": "data/lineups/20260701T021144Z-5c0f1605.json",
+  "description": "",
+  "detected_position": {
+    "confidence": 0.82,
+    "method": "top_left_minimap_marker",
+    "needs_review": false,
+    "note": "左上のミニマップからプレイヤーマーカー候補を検出しました。",
+    "x_percent": 49.76,
+    "y_percent": 7.77
+  },
+  "id": "20260701T021144Z-5c0f1605",
+  "image_path": "assets/lineups/20260701T021144Z-5c0f1605.webp",
+  "jump": false,
+  "jump_label": "ジャンプなし",
+  "map": "Ascent",
+  "map_position": {
+    "confidence": 0.47,
+    "map_image_height": 1024,
+    "map_image_width": 1024,
+    "method": "template_match:rot90+rot90",
+    "needs_review": true,
+    "orientation": "attacker_up",
+    "x": 295.22,
+    "x_percent": 28.83,
+    "y": 53.86,
+    "y_percent": 5.26
+  },
+  "schema_version": 1,
+  "title": ""
+}
