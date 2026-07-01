@@ -6,10 +6,7 @@ from typing import Any
 
 VALORANT_API_MAP_SOURCE = "https://valorant-api.com/v1/maps"
 
-ATTACKER_UP_TRANSFORMS = {
-    # Ascent is the first calibrated target requested for attacker-up display.
-    "Ascent": "rotate_180",
-}
+ATTACKER_UP_TRANSFORMS: dict[str, str] = {}
 
 MAP_CATALOG: list[dict[str, Any]] = [
     {

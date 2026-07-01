@@ -29,13 +29,13 @@
         "confidence": 0.46,
         "map_image_height": 1024,
         "map_image_width": 1024,
-        "method": "corrected_player_pin_marker",
+        "method": "corrected_player_pin_marker_display_coordinates",
         "needs_review": true,
-        "orientation": "attacker_up",
-        "x": 310.58,
-        "x_percent": 30.33,
-        "y": 701.24,
-        "y_percent": 68.48
+        "orientation": "valorant_api_display",
+        "x": 713.42,
+        "x_percent": 69.67,
+        "y": 322.76,
+        "y_percent": 31.52
       },
       "title": ""
     },

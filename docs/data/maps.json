@@ -3,16 +3,15 @@
     {
       "asset_path": "assets/maps/abyss.png",
       "display_name": "Abyss",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "abyss",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/displayicon.png"
     },
     {
       "asset_path": "assets/maps/ascent.png",
-      "attacker_up_transform": "rotate_180",
       "display_name": "Ascent",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "ascent",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/displayicon.png"
@@ -20,7 +19,7 @@
     {
       "asset_path": "assets/maps/bind.png",
       "display_name": "Bind",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "bind",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba/displayicon.png"
@@ -28,7 +27,7 @@
     {
       "asset_path": "assets/maps/breeze.png",
       "display_name": "Breeze",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "breeze",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/displayicon.png"
@@ -36,7 +35,7 @@
     {
       "asset_path": "assets/maps/corrode.png",
       "display_name": "Corrode",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "corrode",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115/displayicon.png"
@@ -44,7 +43,7 @@
     {
       "asset_path": "assets/maps/district.png",
       "display_name": "District",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "district",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/690b3ed2-4dff-945b-8223-6da834e30d24/displayicon.png"
@@ -52,7 +51,7 @@
     {
       "asset_path": "assets/maps/drift.png",
       "display_name": "Drift",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "drift",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/2c09d728-42d5-30d8-43dc-96a05cc7ee9d/displayicon.png"
@@ -60,7 +59,7 @@
     {
       "asset_path": "assets/maps/fracture.png",
       "display_name": "Fracture",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "fracture",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/b529448b-4d60-346e-e89e-00a4c527a405/displayicon.png"
@@ -68,7 +67,7 @@
     {
       "asset_path": "assets/maps/glitch.png",
       "display_name": "Glitch",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "glitch",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/d6336a5a-428f-c591-98db-c8a291159134/displayicon.png"
@@ -76,7 +75,7 @@
     {
       "asset_path": "assets/maps/haven.png",
       "display_name": "Haven",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "haven",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047/displayicon.png"
@@ -84,7 +83,7 @@
     {
       "asset_path": "assets/maps/icebox.png",
       "display_name": "Icebox",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "icebox",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/e2ad5c54-4114-a870-9641-8ea21279579a/displayicon.png"
@@ -92,7 +91,7 @@
     {
       "asset_path": "assets/maps/kasbah.png",
       "display_name": "Kasbah",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "kasbah",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/12452a9d-48c3-0b02-e7eb-0381c3520404/displayicon.png"
@@ -100,7 +99,7 @@
     {
       "asset_path": "assets/maps/lotus.png",
       "display_name": "Lotus",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "lotus",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/displayicon.png"
@@ -108,7 +107,7 @@
     {
       "asset_path": "assets/maps/pearl.png",
       "display_name": "Pearl",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "pearl",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/fd267378-4d1d-484f-ff52-77821ed10dc2/displayicon.png"
@@ -116,7 +115,7 @@
     {
       "asset_path": "assets/maps/piazza.png",
       "display_name": "Piazza",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "piazza",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/de28aa9b-4cbe-1003-320e-6cb3ec309557/displayicon.png"
@@ -124,7 +123,7 @@
     {
       "asset_path": "assets/maps/split.png",
       "display_name": "Split",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "split",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/d960549e-485c-e861-8d71-aa9d1aed12a2/displayicon.png"
@@ -132,7 +131,7 @@
     {
       "asset_path": "assets/maps/summit.png",
       "display_name": "Summit",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "summit",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/displayicon.png"
@@ -140,7 +139,7 @@
     {
       "asset_path": "assets/maps/sunset.png",
       "display_name": "Sunset",
-      "orientation": "attacker_up",
+      "orientation": "valorant_api_display",
       "slug": "sunset",
       "source": "https://valorant-api.com/v1/maps",
       "source_url": "https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/displayicon.png"

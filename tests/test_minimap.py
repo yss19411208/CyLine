@@ -26,7 +26,7 @@ class MinimapDetectionTest(unittest.TestCase):
         self.assertGreater(position_analysis.detected_position.x_percent, 60)
         self.assertLess(position_analysis.detected_position.y_percent, 45)
 
-    def test_ascent_fixture_applies_attacker_up_transform_for_fallback(self) -> None:
+    def test_ascent_fixture_keeps_display_coordinates_for_fallback(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
         screenshot_path = (
             repo_root
@@ -44,8 +44,8 @@ class MinimapDetectionTest(unittest.TestCase):
             maps_dir=repo_root / "docs" / "assets" / "maps",
         )
 
-        self.assertLess(position_analysis.map_position.x_percent, 40)
-        self.assertGreater(position_analysis.map_position.y_percent, 60)
+        self.assertGreater(position_analysis.map_position.x_percent, 60)
+        self.assertLess(position_analysis.map_position.y_percent, 45)
 
 
 if __name__ == "__main__":

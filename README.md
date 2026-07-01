@@ -181,9 +181,8 @@ $env:PYTHONPATH='src'
 python tools/sync_valorant_maps.py
 ```
 
-Ascent has a project-side `rotate_180` display transform for the requested
-attacker-up view. Other maps currently use the Valorant-API display orientation
-until each map is visually calibrated.
+Map pins are stored against the same map image orientation used by the HTML
+viewer. The current default is the Valorant-API `displayIcon` orientation.
 
 ## Minimap detection status
 

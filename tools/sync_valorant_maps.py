@@ -34,7 +34,7 @@ def main() -> None:
                 "asset_path": f"assets/maps/{slug}.png",
                 "source_url": metadata["display_icon"],
                 "source": VALORANT_API_MAP_SOURCE,
-                "orientation": "attacker_up",
+                "orientation": "valorant_api_display",
                 "attacker_up_transform": get_attacker_up_transform(display_name),
                 "x_multiplier": metadata["x_multiplier"],
                 "y_multiplier": metadata["y_multiplier"],
