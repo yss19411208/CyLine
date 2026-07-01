@@ -206,8 +206,8 @@ def _read_map_dimensions(valorant_map: str, maps_dir: Path) -> tuple[int | None,
 
 def _crop_likely_minimap(rgb_image):
     image_width, image_height = rgb_image.size
-    crop_left = int(image_width * 0.06)
-    crop_top = int(image_height * 0.07)
+    crop_left = int(image_width * 0.03)
+    crop_top = int(image_height * 0.09)
     crop_size = int(min(image_width * 0.20, image_height * 0.38))
     crop_size = max(160, min(crop_size, image_width - crop_left, image_height - crop_top))
     return rgb_image.crop(

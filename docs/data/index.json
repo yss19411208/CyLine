@@ -17,8 +17,8 @@
         "method": "top_left_minimap_marker",
         "needs_review": false,
         "note": "左上のミニマップからプレイヤーマーカー候補を検出しました。",
-        "x_percent": 69.67,
-        "y_percent": 31.52
+        "x_percent": 84.94,
+        "y_percent": 26.1
       },
       "id": "20260701T021144Z-5c0f1605",
       "image_path": "assets/lineups/20260701T021144Z-5c0f1605.webp",
@@ -32,10 +32,10 @@
         "method": "map_alignment:rot:270",
         "needs_review": false,
         "orientation": "attacker_up",
-        "x": 712.6,
-        "x_percent": 69.59,
-        "y": 335.26,
-        "y_percent": 32.74
+        "x": 844.8,
+        "x_percent": 82.5,
+        "y": 296.86,
+        "y_percent": 28.99
       },
       "title": ""
     },

@@ -23,10 +23,15 @@ class MinimapDetectionTest(unittest.TestCase):
             maps_dir=repo_root / "docs" / "assets" / "maps",
         )
 
-        self.assertGreater(position_analysis.detected_position.x_percent, 60)
-        self.assertLess(position_analysis.detected_position.y_percent, 45)
+        self.assertGreater(position_analysis.detected_position.x_percent, 80)
+        self.assertLess(position_analysis.detected_position.y_percent, 35)
 
     def test_ascent_fixture_keeps_display_coordinates_for_fallback(self) -> None:
+        try:
+            import cv2  # noqa: F401
+        except ImportError:
+            self.skipTest("OpenCV is required for map alignment coordinates.")
+
         repo_root = Path(__file__).resolve().parents[1]
         screenshot_path = (
             repo_root
@@ -44,8 +49,8 @@ class MinimapDetectionTest(unittest.TestCase):
             maps_dir=repo_root / "docs" / "assets" / "maps",
         )
 
-        self.assertGreater(position_analysis.map_position.x_percent, 60)
-        self.assertLess(position_analysis.map_position.y_percent, 45)
+        self.assertAlmostEqual(position_analysis.map_position.x_percent, 82.5, delta=1.0)
+        self.assertAlmostEqual(position_analysis.map_position.y_percent, 28.99, delta=1.0)
 
     def test_ascent_transform_rotates_api_coordinates_to_display_position(self) -> None:
         transformed_x_percent, transformed_y_percent = _apply_attacker_up_transform(
