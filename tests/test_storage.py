@@ -19,7 +19,9 @@ class LineupStorageTest(unittest.TestCase):
                 data_dir=docs_dir / "data",
                 lineups_dir=docs_dir / "data" / "lineups",
                 assets_dir=docs_dir / "assets" / "lineups",
-                public_base_url="",
+                maps_dir=docs_dir / "assets" / "maps",
+                public_base_url="https://yss19411208.github.io/CyLine/",
+                asset_base_url="https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/",
                 discord_token="",
                 discord_guild_id=None,
                 discord_notify_channel_id=None,
@@ -55,6 +57,7 @@ class LineupStorageTest(unittest.TestCase):
 
             self.assertEqual(record["map"], "Ascent")
             self.assertEqual(record["detected_position"]["method"], "manual")
+            self.assertEqual(record["map_position"]["method"], "manual")
             self.assertTrue((docs_dir / record["image_path"]).exists())
             self.assertTrue((docs_dir / record["data_path"]).exists())
             self.assertIn(docs_dir / "data" / "index.json", changed_paths)

@@ -12,8 +12,9 @@ and from a GitHub Pages front end.
 - JSON storage under `docs/data/lineups/` plus `docs/data/index.json`.
 - Optional Discord notification.
 - Optional Git commit and push after each registration.
-- GitHub Pages viewer and web registration form.
-- First-pass minimap position estimate with manual correction.
+- GitHub Pages map viewer and web registration form.
+- Minimap position estimate with manual correction.
+- Discord lineup search.
 
 ## Important security note
 
@@ -27,7 +28,7 @@ end does not send a secret token, because public JavaScript would expose it.
 
 ## Requirements
 
-This project targets Python 3.11 or later. The current workspace syntax check
+This project targets Python 3.12 or later. The current workspace syntax check
 was run with Python 3.12.13 from the Codex bundled runtime.
 
 Install dependencies:
@@ -59,7 +60,7 @@ CYLINE_DISCORD_TOKEN=your_discord_bot_token
 Use the raw GitHub `docs/` URL for Discord image links:
 
 ```env
-CYLINE_PUBLIC_BASE_URL=https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/
+CYLINE_ASSET_BASE_URL=https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/
 ```
 
 Recommended for development:
@@ -84,6 +85,15 @@ Use the slash command:
 ```text
 /register screenshot:<image> ability:<camera|cage|wire> jump:<true|false> map:<map>
 ```
+
+Search registered lineups:
+
+```text
+/search map:<map> ability:<camera|cage|wire> jump:<true|false> keyword:<text>
+```
+
+Search results show a numbered map preview when a map is selected. Select a
+result in Discord to see the image URL and details.
 
 Optional fields:
 
@@ -120,7 +130,7 @@ docs/data/index.json
 ```
 
 The GitHub Pages site is still used for the HTML viewer. Discord image links use
-the raw GitHub URL configured in `CYLINE_PUBLIC_BASE_URL`, for example:
+the raw GitHub URL configured in `CYLINE_ASSET_BASE_URL`, for example:
 
 ```text
 https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/assets/lineups/example.png
@@ -138,14 +148,36 @@ Open:
 http://127.0.0.1:8080/
 ```
 
+## Map assets
+
+Map metadata and display icons come from the non-official Valorant-API map
+endpoint:
+
+```text
+https://valorant-api.com/v1/maps
+```
+
+The HTML viewer can use remote `displayIcon` URLs from `docs/data/maps.json`.
+To cache map images under `docs/assets/maps/`, run:
+
+```powershell
+$env:PYTHONPATH='src'
+python tools/sync_valorant_maps.py
+```
+
+Ascent has a project-side `rotate_180` display transform for the requested
+attacker-up view. Other maps currently use the Valorant-API display orientation
+until each map is visually calibrated.
+
 ## Minimap detection status
 
-The current detector is intentionally conservative. It crops the likely
-top-left minimap area and searches for a bright player marker candidate. The
+The detector is intentionally conservative. It crops the likely top-left
+minimap area, searches for the player marker, then tries to match the selected
+map template while considering rotation, flips, and scale differences. The
 result is saved with `confidence` and `needs_review`.
 
-Accurate rotated minimap matching requires calibrated per-map minimap templates.
-Those assets should live in `docs/assets/map-templates/`.
+If OpenCV is unavailable or matching confidence is low, the lineup is saved with
+`needs_review=true` and can still be manually corrected.
 
 ## Data shape
 
@@ -159,5 +191,6 @@ Each lineup record includes:
 - `description`
 - `image_path`
 - `detected_position`
+- `map_position`
 - `author`
 - `created_at`

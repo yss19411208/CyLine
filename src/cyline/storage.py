@@ -45,9 +45,11 @@ class LineupStorage:
         self.settings.assets_dir.mkdir(parents=True, exist_ok=True)
         self.settings.lineups_dir.mkdir(parents=True, exist_ok=True)
 
-        minimap_estimate = estimate_player_position(
+        position_analysis = estimate_player_position(
             screenshot_bytes,
             lineup_input.manual_position,
+            lineup_input.valorant_map,
+            self.settings.maps_dir,
         )
         record = {
             "schema_version": 1,
@@ -61,7 +63,8 @@ class LineupStorage:
             "jump_label": JUMP_LABELS[lineup_input.jump],
             "image_path": image_relative_path,
             "data_path": json_relative_path,
-            "detected_position": asdict(minimap_estimate),
+            "detected_position": asdict(position_analysis.detected_position),
+            "map_position": asdict(position_analysis.map_position),
             "author": asdict(author),
             "created_at": created_at,
         }
@@ -95,6 +98,7 @@ class LineupStorage:
             "image_path": record["image_path"],
             "data_path": record["data_path"],
             "detected_position": record["detected_position"],
+            "map_position": record["map_position"],
             "author": record["author"],
             "created_at": record["created_at"],
         }

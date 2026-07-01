@@ -145,6 +145,81 @@ button:disabled {
   gap: 14px;
 }
 
+.content {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.map-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 14px;
+}
+
+.map-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.map-header h2 {
+  font-size: 18px;
+}
+
+.map-header p {
+  color: var(--muted);
+}
+
+.map-stage {
+  position: relative;
+  width: min(100%, 720px);
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b0f10;
+}
+
+.map-stage img,
+.map-pins {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map-stage img {
+  object-fit: contain;
+  transform-origin: center;
+}
+
+.map-pins {
+  pointer-events: none;
+}
+
+.map-pin {
+  position: absolute;
+  width: 28px;
+  min-height: 28px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #031312;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #031312;
+  font-size: 12px;
+  font-weight: 800;
+  pointer-events: auto;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.18);
+}
+
+.map-pin.needs-review {
+  background: #fbbf24;
+}
+
 .lineup-card {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -280,4 +355,3 @@ dialog::backdrop {
     grid-template-columns: 1fr;
   }
 }
-

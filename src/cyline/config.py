@@ -5,6 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+DEFAULT_ASSET_BASE_URL = "https://raw.githubusercontent.com/yss19411208/CyLine/refs/heads/main/docs/"
+
+
 try:
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover - allows syntax checks before install.
@@ -45,7 +48,9 @@ class Settings:
     data_dir: Path
     lineups_dir: Path
     assets_dir: Path
+    maps_dir: Path
     public_base_url: str
+    asset_base_url: str
     discord_token: str
     discord_guild_id: int | None
     discord_notify_channel_id: int | None
@@ -90,7 +95,12 @@ class Settings:
             data_dir=data_dir,
             lineups_dir=data_dir / "lineups",
             assets_dir=docs_dir / "assets" / "lineups",
+            maps_dir=docs_dir / "assets" / "maps",
             public_base_url=os.getenv("CYLINE_PUBLIC_BASE_URL", "").strip(),
+            asset_base_url=os.getenv(
+                "CYLINE_ASSET_BASE_URL",
+                DEFAULT_ASSET_BASE_URL,
+            ).strip() or DEFAULT_ASSET_BASE_URL,
             discord_token=os.getenv("CYLINE_DISCORD_TOKEN", "").strip(),
             discord_guild_id=_read_optional_int("CYLINE_DISCORD_GUILD_ID"),
             discord_notify_channel_id=_read_optional_int(
@@ -106,4 +116,3 @@ class Settings:
             cors_allowed_origins=cors_allowed_origins or ["*"],
             max_screenshot_bytes=max_screenshot_bytes,
         )
-

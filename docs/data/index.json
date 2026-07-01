@@ -24,6 +24,18 @@
       "image_path": "assets/lineups/20260630T231807Z-033b9227.png",
       "jump": true,
       "jump_label": "ジャンプあり",
+      "map_position": {
+        "confidence": 0.65,
+        "map_image_height": 1024,
+        "map_image_width": 1024,
+        "method": "legacy_detected_position",
+        "needs_review": false,
+        "orientation": "attacker_up",
+        "x": 708.2,
+        "x_percent": 69.16,
+        "y": 648.19,
+        "y_percent": 63.3
+      },
       "map": "Corrode",
       "title": ""
     },
@@ -50,6 +62,18 @@
       "image_path": "assets/lineups/20260630T165400Z-3aa21b99.png",
       "jump": true,
       "jump_label": "ジャンプあり",
+      "map_position": {
+        "confidence": 0.65,
+        "map_image_height": 1024,
+        "map_image_width": 1024,
+        "method": "legacy_detected_position",
+        "needs_review": false,
+        "orientation": "attacker_up",
+        "x": 343.76,
+        "x_percent": 33.57,
+        "y": 593.51,
+        "y_percent": 57.96
+      },
       "map": "Bind",
       "title": ""
     },
@@ -76,6 +100,18 @@
       "image_path": "assets/lineups/20260630T162632Z-3695133e.png",
       "jump": true,
       "jump_label": "ジャンプあり",
+      "map_position": {
+        "confidence": 0.65,
+        "map_image_height": 1024,
+        "map_image_width": 1024,
+        "method": "legacy_detected_position",
+        "needs_review": false,
+        "orientation": "attacker_up",
+        "x": 343.76,
+        "x_percent": 33.57,
+        "y": 593.51,
+        "y_percent": 57.96
+      },
       "map": "Lotus",
       "title": ""
     }

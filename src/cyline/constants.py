@@ -1,3 +1,6 @@
+from .map_catalog import get_map_names
+
+
 ABILITIES = {
     "camera": "スパイカメラ",
     "cage": "サイバーケージ",
@@ -9,20 +12,5 @@ JUMP_LABELS = {
     True: "ジャンプあり",
 }
 
-# Source for the initial list: Riot Games VALORANT maps page.
-# Keep this list in one place because Discord slash command choices are static
-# until the bot re-syncs commands.
-VALORANT_MAPS = [
-    "Abyss",
-    "Ascent",
-    "Bind",
-    "Breeze",
-    "Corrode",
-    "Fracture",
-    "Haven",
-    "Icebox",
-    "Lotus",
-    "Pearl",
-    "Split",
-    "Sunset",
-]
+# Source: Valorant-API map endpoint, mirrored in map_catalog.py.
+VALORANT_MAPS = get_map_names()

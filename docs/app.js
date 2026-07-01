@@ -1,20 +1,27 @@
 (function () {
-  const maps = [
+  const fallbackMaps = [
     "Abyss",
     "Ascent",
     "Bind",
     "Breeze",
     "Corrode",
+    "District",
+    "Drift",
     "Fracture",
+    "Glitch",
     "Haven",
     "Icebox",
+    "Kasbah",
     "Lotus",
     "Pearl",
+    "Piazza",
     "Split",
+    "Summit",
     "Sunset"
   ];
 
   const state = {
+    maps: [],
     lineups: [],
     filteredLineups: []
   };
@@ -33,11 +40,39 @@
   const detailMeta = document.getElementById("detailMeta");
   const detailDescription = document.getElementById("detailDescription");
   const closeDialog = document.getElementById("closeDialog");
+  const mapTitle = document.getElementById("mapTitle");
+  const mapStatus = document.getElementById("mapStatus");
+  const mapImage = document.getElementById("mapImage");
+  const mapPins = document.getElementById("mapPins");
+
+  async function initialize() {
+    await loadMaps();
+    setupMapOptions();
+    await loadLineups();
+  }
+
+  async function loadMaps() {
+    try {
+      const response = await fetch("data/maps.json", { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const mapsData = await response.json();
+      state.maps = Array.isArray(mapsData.maps) ? mapsData.maps : [];
+    } catch (error) {
+      state.maps = fallbackMaps.map((mapName) => ({
+        display_name: mapName,
+        asset_path: "",
+        source_url: ""
+      }));
+    }
+  }
 
   function setupMapOptions() {
     mapFilter.innerHTML = '<option value="">すべて</option>';
     registerMap.innerHTML = "";
-    maps.forEach((mapName) => {
+    state.maps.forEach((mapEntry) => {
+      const mapName = mapEntry.display_name;
       const filterOption = document.createElement("option");
       filterOption.value = mapName;
       filterOption.textContent = mapName;
@@ -87,7 +122,79 @@
       return true;
     });
 
+    renderMap();
     renderLineups();
+  }
+
+  function renderMap() {
+    const selectedMap = mapFilter.value || state.filteredLineups[0]?.map || state.maps[0]?.display_name || "";
+    const mapEntry = state.maps.find((entry) => entry.display_name === selectedMap);
+    mapTitle.textContent = selectedMap || "マップ";
+    mapPins.innerHTML = "";
+
+    if (!mapEntry) {
+      mapImage.removeAttribute("src");
+      mapImage.style.transform = "";
+      mapStatus.textContent = "マップを選択してください";
+      return;
+    }
+
+    setMapImageSource(mapEntry, selectedMap);
+    const mapLineups = state.filteredLineups.filter((lineup) => lineup.map === selectedMap);
+    mapStatus.textContent = `${mapLineups.length}件`;
+
+    mapLineups.forEach((lineup, index) => {
+      const position = getPosition(lineup);
+      if (!hasMapPoint(position)) {
+        return;
+      }
+
+      const pin = document.createElement("button");
+      pin.type = "button";
+      pin.className = position.needs_review ? "map-pin needs-review" : "map-pin";
+      pin.style.left = `${position.x_percent}%`;
+      pin.style.top = `${position.y_percent}%`;
+      pin.textContent = String(index + 1);
+      pin.title = lineup.title || `${lineup.map} ${lineup.ability_label}`;
+      pin.addEventListener("click", () => openDetail(lineup));
+      mapPins.appendChild(pin);
+    });
+  }
+
+  function setMapImageSource(mapEntry, selectedMap) {
+    const localAssetPath = mapEntry.asset_path || "";
+    const remoteSourceUrl = mapEntry.source_url || "";
+    mapImage.style.transform = getMapImageTransform(mapEntry.attacker_up_transform);
+
+    mapImage.onerror = null;
+    if (!localAssetPath && !remoteSourceUrl) {
+      mapImage.removeAttribute("src");
+      mapImage.alt = `${selectedMap} map`;
+      return;
+    }
+
+    if (localAssetPath && remoteSourceUrl && localAssetPath !== remoteSourceUrl) {
+      mapImage.onerror = () => {
+        mapImage.onerror = null;
+        mapImage.src = remoteSourceUrl;
+      };
+    }
+
+    mapImage.src = localAssetPath || remoteSourceUrl;
+    mapImage.alt = `${selectedMap} map`;
+  }
+
+  function getMapImageTransform(attackerUpTransform) {
+    if (attackerUpTransform === "rotate_180") {
+      return "rotate(180deg)";
+    }
+    if (attackerUpTransform === "flip_horizontal") {
+      return "scaleX(-1)";
+    }
+    if (attackerUpTransform === "flip_vertical") {
+      return "scaleY(-1)";
+    }
+    return "";
   }
 
   function renderLineups() {
@@ -123,7 +230,7 @@
 
       const meta = document.createElement("div");
       meta.className = "card-meta";
-      [lineup.map, lineup.ability_label, lineup.jump_label].forEach((label) => {
+      [lineup.map, lineup.ability_label, lineup.jump_label, formatPosition(getPosition(lineup))].forEach((label) => {
         const chip = document.createElement("span");
         chip.className = "chip";
         chip.textContent = label;
@@ -143,12 +250,12 @@
     detailDescription.textContent = lineup.description || "";
     detailMeta.innerHTML = "";
 
-    const position = lineup.detected_position || {};
+    const position = getPosition(lineup);
     const fields = [
       ["マップ", lineup.map],
       ["アビリティ", lineup.ability_label],
       ["ジャンプ", lineup.jump_label],
-      ["位置", formatPosition(position)],
+      ["座標", formatPosition(position)],
       ["信頼度", String(position.confidence ?? "不明")],
       ["登録者", lineup.author?.display_name || "不明"],
       ["登録日時", lineup.created_at]
@@ -165,12 +272,28 @@
     detailDialog.showModal();
   }
 
+  function getPosition(lineup) {
+    if (lineup.map_position) {
+      return lineup.map_position;
+    }
+
+    if (lineup.detected_position) {
+      return lineup.detected_position;
+    }
+
+    return {};
+  }
+
+  function hasMapPoint(position) {
+    return typeof position.x_percent === "number" && typeof position.y_percent === "number";
+  }
+
   function formatPosition(position) {
-    if (typeof position.x_percent !== "number" || typeof position.y_percent !== "number") {
+    if (!hasMapPoint(position)) {
       return "要確認";
     }
     const reviewSuffix = position.needs_review ? " / 要確認" : "";
-    return `${position.x_percent}, ${position.y_percent}${reviewSuffix}`;
+    return `${Number(position.x_percent).toFixed(2)}, ${Number(position.y_percent).toFixed(2)}${reviewSuffix}`;
   }
 
   async function submitRegistration(event) {
@@ -211,11 +334,10 @@
     }
   }
 
-  setupMapOptions();
   mapFilter.addEventListener("change", applyFilters);
   abilityFilter.addEventListener("change", applyFilters);
   jumpFilter.addEventListener("change", applyFilters);
   registerForm.addEventListener("submit", submitRegistration);
   closeDialog.addEventListener("click", () => detailDialog.close());
-  loadLineups();
+  initialize();
 })();
