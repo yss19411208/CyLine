@@ -39,6 +39,21 @@ class PositionAnalysis:
     map_position: MapPosition
 
 
+@dataclass(frozen=True)
+class MapAlignment:
+    match_x: float
+    match_y: float
+    match_size: float
+    score: float
+    operations: tuple[str, ...]
+    template_left: int
+    template_top: int
+    template_width: int
+    template_height: int
+    template_image_width: int
+    template_image_height: int
+
+
 def estimate_player_position(
     screenshot_bytes: bytes,
     manual_position: ManualPosition | None,
@@ -92,7 +107,15 @@ def estimate_player_position(
                 )
 
             minimap_crop = _crop_likely_minimap(rgb_image)
-            marker_position = _find_player_marker(minimap_crop)
+            map_alignment = _match_minimap_to_selected_map(
+                minimap_crop,
+                lineup_map=valorant_map,
+                maps_dir=maps_dir,
+            )
+            marker_position = _find_player_marker(
+                minimap_crop,
+                search_bounds=_alignment_search_bounds(map_alignment, minimap_crop.size),
+            )
             if marker_position is None:
                 return _unavailable_analysis(
                     map_width,
@@ -115,13 +138,12 @@ def estimate_player_position(
                 note="左上のミニマップからプレイヤーマーカー候補を検出しました。",
             )
 
-            map_position = _estimate_map_position_from_template(
-                minimap_crop=minimap_crop,
+            map_position = _build_position_from_alignment(
                 marker_x=marker_x,
                 marker_y=marker_y,
                 marker_confidence=marker_confidence,
+                map_alignment=map_alignment,
                 valorant_map=valorant_map,
-                maps_dir=maps_dir,
                 fallback_x_percent=detected_x_percent,
                 fallback_y_percent=detected_y_percent,
                 map_width=map_width,
@@ -198,7 +220,20 @@ def _crop_likely_minimap(rgb_image):
     )
 
 
-def _find_player_marker(rgb_image):
+def _find_player_marker(rgb_image, search_bounds: tuple[int, int, int, int] | None = None):
+    if search_bounds is not None:
+        left, top, right, bottom = search_bounds
+        if right <= left or bottom <= top:
+            return None
+
+        bounded_image = rgb_image.crop((left, top, right, bottom))
+        bounded_marker = _find_player_marker(bounded_image)
+        if bounded_marker is None:
+            return None
+
+        marker_x, marker_y, confidence = bounded_marker
+        return marker_x + left, marker_y + top, confidence
+
     pin_marker = _find_red_white_pin_marker(rgb_image)
     if pin_marker is not None:
         return pin_marker
@@ -397,22 +432,91 @@ def _find_compact_bright_marker(rgb_image):
     return marker_x, marker_y, confidence
 
 
-def _estimate_map_position_from_template(
+def _match_minimap_to_selected_map(
     minimap_crop,
+    lineup_map: str,
+    maps_dir: Path,
+) -> MapAlignment | None:
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return None
+
+    crop_array = np.array(minimap_crop.convert("RGB"))
+    map_asset_path = get_map_asset_path(maps_dir, lineup_map)
+    template_image = _load_template_image(map_asset_path, lineup_map, cv2, np)
+    if template_image is None:
+        return None
+
+    template_mask, template_bounds, template_size = _prepare_template_shape_mask(
+        template_image,
+        cv2,
+        np,
+    )
+    if template_mask is None:
+        return None
+
+    best_match = _find_best_color_template_match(
+        crop_array,
+        template_image,
+        template_bounds,
+        cv2,
+        np,
+    )
+    if best_match is None:
+        crop_mask = _build_minimap_shape_mask(crop_array, cv2, np)
+        best_match = _find_best_template_match(crop_mask, template_mask, cv2)
+    if best_match is None:
+        return None
+
+    match_x, match_y, match_size, score, operations = best_match
+    if score < 0.35:
+        return None
+
+    return MapAlignment(
+        match_x=match_x,
+        match_y=match_y,
+        match_size=match_size,
+        score=score,
+        operations=operations,
+        template_left=template_bounds[0],
+        template_top=template_bounds[1],
+        template_width=template_bounds[2],
+        template_height=template_bounds[3],
+        template_image_width=template_size[0],
+        template_image_height=template_size[1],
+    )
+
+
+def _alignment_search_bounds(
+    map_alignment: MapAlignment | None,
+    crop_size: tuple[int, int],
+) -> tuple[int, int, int, int] | None:
+    if map_alignment is None:
+        return None
+
+    crop_width, crop_height = crop_size
+    margin = max(6, int(map_alignment.match_size * 0.04))
+    left = max(0, int(map_alignment.match_x) - margin)
+    top = max(0, int(map_alignment.match_y) - margin)
+    right = min(crop_width, int(map_alignment.match_x + map_alignment.match_size) + margin)
+    bottom = min(crop_height, int(map_alignment.match_y + map_alignment.match_size) + margin)
+    return left, top, right, bottom
+
+
+def _build_position_from_alignment(
     marker_x: float,
     marker_y: float,
     marker_confidence: float,
+    map_alignment: MapAlignment | None,
     valorant_map: str,
-    maps_dir: Path,
     fallback_x_percent: float,
     fallback_y_percent: float,
     map_width: int | None,
     map_height: int | None,
 ) -> MapPosition:
-    try:
-        import cv2
-        import numpy as np
-    except ImportError:
+    if map_alignment is None:
         return _build_fallback_map_position(
             x_percent=fallback_x_percent,
             y_percent=fallback_y_percent,
@@ -420,47 +524,27 @@ def _estimate_map_position_from_template(
             map_height=map_height,
             confidence=round(marker_confidence * 0.5, 2),
             needs_review=True,
-            method="marker_percent_without_opencv",
+            method="marker_percent_without_map_alignment",
             valorant_map=valorant_map,
         )
 
-    crop_array = np.array(minimap_crop.convert("RGB"))
-    crop_mask = _build_minimap_shape_mask(crop_array, cv2, np)
-    map_asset_path = get_map_asset_path(maps_dir, valorant_map)
-    template_image = _load_template_image(map_asset_path, valorant_map, cv2, np)
-    if template_image is None:
-        return _build_fallback_map_position(
-            x_percent=fallback_x_percent,
-            y_percent=fallback_y_percent,
-            map_width=map_width,
-            map_height=map_height,
-            confidence=round(marker_confidence * 0.45, 2),
-            needs_review=True,
-            method="marker_percent_unreadable_map_asset",
-            valorant_map=valorant_map,
-        )
-
-    template_mask = _build_template_shape_mask(template_image, cv2, np)
-    best_match = _find_best_template_match(crop_mask, template_mask, cv2)
-    if best_match is None:
-        return _build_fallback_map_position(
-            x_percent=fallback_x_percent,
-            y_percent=fallback_y_percent,
-            map_width=map_width,
-            map_height=map_height,
-            confidence=round(marker_confidence * 0.45, 2),
-            needs_review=True,
-            method="marker_percent_no_template_match",
-            valorant_map=valorant_map,
-        )
-
-    match_x, match_y, match_size, score, operations = best_match
-    oriented_x_percent = ((marker_x - match_x) / max(match_size - 1, 1)) * 100
-    oriented_y_percent = ((marker_y - match_y) / max(match_size - 1, 1)) * 100
+    oriented_x_percent = (
+        (marker_x - map_alignment.match_x)
+        / max(map_alignment.match_size - 1, 1)
+    ) * 100
+    oriented_y_percent = (
+        (marker_y - map_alignment.match_y)
+        / max(map_alignment.match_size - 1, 1)
+    ) * 100
     base_x_percent, base_y_percent = _invert_operations(
         oriented_x_percent,
         oriented_y_percent,
-        operations,
+        map_alignment.operations,
+    )
+    base_x_percent, base_y_percent = _template_content_percent_to_display_percent(
+        base_x_percent,
+        base_y_percent,
+        map_alignment,
     )
     base_x_percent, base_y_percent = _apply_attacker_up_transform(
         base_x_percent,
@@ -470,26 +554,14 @@ def _estimate_map_position_from_template(
     base_x_percent = _clamp_percent(base_x_percent)
     base_y_percent = _clamp_percent(base_y_percent)
 
-    confidence = round(min(score * 0.65 + marker_confidence * 0.35, 0.95), 2)
+    confidence = round(min(map_alignment.score * 0.65 + marker_confidence * 0.35, 0.95), 2)
     needs_review = (
         confidence < 0.62
-        or marker_x < match_x
-        or marker_y < match_y
-        or marker_x > match_x + match_size
-        or marker_y > match_y + match_size
+        or oriented_x_percent < 0
+        or oriented_y_percent < 0
+        or oriented_x_percent > 100
+        or oriented_y_percent > 100
     )
-
-    if needs_review:
-        return _build_fallback_map_position(
-            x_percent=fallback_x_percent,
-            y_percent=fallback_y_percent,
-            map_width=map_width,
-            map_height=map_height,
-            confidence=round(marker_confidence * 0.5, 2),
-            needs_review=True,
-            method=f"marker_percent_low_template_confidence:{'+'.join(operations) or 'identity'}",
-            valorant_map=valorant_map,
-        )
 
     return _build_map_position(
         x_percent=base_x_percent,
@@ -498,8 +570,30 @@ def _estimate_map_position_from_template(
         map_height=map_height,
         confidence=confidence,
         needs_review=needs_review,
-        method=f"template_match:{'+'.join(operations) or 'identity'}",
+        method=f"map_alignment:{'+'.join(map_alignment.operations) or 'identity'}",
     )
+
+
+def _template_content_percent_to_display_percent(
+    x_percent: float,
+    y_percent: float,
+    map_alignment: MapAlignment,
+) -> tuple[float, float]:
+    content_x = map_alignment.template_left + (x_percent / 100) * max(
+        map_alignment.template_width - 1,
+        1,
+    )
+    content_y = map_alignment.template_top + (y_percent / 100) * max(
+        map_alignment.template_height - 1,
+        1,
+    )
+    display_x_percent = (
+        content_x / max(map_alignment.template_image_width - 1, 1)
+    ) * 100
+    display_y_percent = (
+        content_y / max(map_alignment.template_image_height - 1, 1)
+    ) * 100
+    return display_x_percent, display_y_percent
 
 
 def _build_minimap_shape_mask(crop_array, cv2, np):
@@ -515,15 +609,227 @@ def _build_minimap_shape_mask(crop_array, cv2, np):
     return cv2.morphologyEx(combined_mask, cv2.MORPH_CLOSE, kernel)
 
 
-def _build_template_shape_mask(template_image, cv2, np):
+def _find_best_color_template_match(crop_array, template_image, template_bounds, cv2, np):
+    template_rgb, template_alpha = _template_rgb_and_alpha(
+        template_image,
+        template_bounds,
+        cv2,
+        np,
+    )
+    if template_rgb is None or template_alpha is None:
+        return None
+
+    crop_height, crop_width = crop_array.shape[:2]
+    maximum_size = min(crop_width, crop_height)
+    candidate_sizes = sorted(
+        {
+            int(maximum_size * ratio)
+            for ratio in (0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0)
+            if int(maximum_size * ratio) >= 90
+        }
+    )
+    if not candidate_sizes:
+        return None
+
+    outline_distance = _build_minimap_outline_distance(crop_array, cv2, np)
+    best_match = None
+    preferred_operations = _preferred_orientation_operations()
+    preferred_operation_set = set(preferred_operations)
+    operation_batches = [
+        preferred_operations,
+        [
+            operations
+            for operations in _orientation_operations()
+            if operations not in preferred_operation_set
+        ],
+    ]
+    for batch_index, operation_batch in enumerate(operation_batches):
+        for operations in operation_batch:
+            transformed_rgb = _apply_template_image_operations(
+                template_rgb,
+                operations,
+                cv2,
+                cv2.INTER_LINEAR,
+            )
+            transformed_alpha = _apply_template_operations(template_alpha, operations, cv2)
+            for candidate_size in candidate_sizes:
+                resized_rgb = cv2.resize(
+                    transformed_rgb,
+                    (candidate_size, candidate_size),
+                    interpolation=cv2.INTER_AREA,
+                )
+                resized_alpha = cv2.resize(
+                    transformed_alpha,
+                    (candidate_size, candidate_size),
+                    interpolation=cv2.INTER_NEAREST,
+                )
+                if np.count_nonzero(resized_alpha) < 50:
+                    continue
+
+                try:
+                    match_result = cv2.matchTemplate(
+                        crop_array,
+                        resized_rgb,
+                        cv2.TM_CCORR_NORMED,
+                        mask=resized_alpha,
+                    )
+                except cv2.error:
+                    continue
+
+                match_result = np.nan_to_num(match_result, nan=-1.0, posinf=-1.0, neginf=-1.0)
+                _min_value, color_score, _min_location, max_location = cv2.minMaxLoc(match_result)
+                edge_score = _score_outline_alignment(
+                    outline_distance,
+                    resized_alpha,
+                    max_location,
+                    cv2,
+                    np,
+                )
+                coverage_score = candidate_size / maximum_size
+                combined_score = (
+                    float(color_score) * 0.68
+                    + float(coverage_score) * 0.22
+                    + float(edge_score) * 0.10
+                ) - _operation_complexity_penalty(operations)
+                candidate = (
+                    float(max_location[0]),
+                    float(max_location[1]),
+                    float(candidate_size),
+                    combined_score,
+                    operations,
+                )
+                if best_match is None or candidate[3] > best_match[3]:
+                    best_match = candidate
+
+        if batch_index == 0 and best_match is not None and best_match[3] >= 0.88:
+            return best_match
+
+    return best_match
+
+
+def _operation_complexity_penalty(operations: tuple[str, ...]) -> float:
+    penalty = 0.0
+    for operation in operations:
+        if operation.startswith("rot:"):
+            angle = float(operation.split(":", 1)[1])
+            if angle % 90 != 0:
+                penalty += 0.02
+        elif operation in {"flip_h", "flip_v"}:
+            penalty += 0.006
+    return penalty
+
+
+def _preferred_orientation_operations() -> list[tuple[str, ...]]:
+    operations: list[tuple[str, ...]] = []
+    flip_sets = [
+        tuple(),
+        ("flip_h",),
+        ("flip_v",),
+        ("flip_h", "flip_v"),
+    ]
+    for angle in (0, 90, 180, 270):
+        rotation = tuple() if angle == 0 else (f"rot:{angle}",)
+        for flip_set in flip_sets:
+            operations.append(flip_set + rotation)
+    return operations
+
+
+def _template_rgb_and_alpha(template_image, template_bounds, cv2, np):
+    crop_left, crop_top, crop_width, crop_height = template_bounds
+    if crop_width <= 0 or crop_height <= 0:
+        return None, None
+
+    if template_image.shape[2] == 4:
+        template_rgb = cv2.cvtColor(template_image[:, :, :3], cv2.COLOR_BGR2RGB)
+        template_alpha = template_image[:, :, 3]
+    else:
+        template_rgb = cv2.cvtColor(template_image, cv2.COLOR_BGR2RGB)
+        gray_image = cv2.cvtColor(template_image, cv2.COLOR_BGR2GRAY)
+        _, template_alpha = cv2.threshold(gray_image, 20, 255, cv2.THRESH_BINARY)
+
+    crop_right = crop_left + crop_width
+    crop_bottom = crop_top + crop_height
+    cropped_rgb = template_rgb[crop_top:crop_bottom, crop_left:crop_right]
+    cropped_alpha = template_alpha[crop_top:crop_bottom, crop_left:crop_right]
+    return cropped_rgb, cropped_alpha.astype(np.uint8)
+
+
+def _build_minimap_outline_distance(crop_array, cv2, np):
+    hsv_image = cv2.cvtColor(crop_array, cv2.COLOR_RGB2HSV)
+    saturation = hsv_image[:, :, 1]
+    value = hsv_image[:, :, 2]
+    channel_spread = crop_array.max(axis=2) - crop_array.min(axis=2)
+    outline_mask = (
+        (channel_spread <= 45)
+        & (saturation <= 50)
+        & (value >= 150)
+        & (value <= 230)
+    ).astype(np.uint8) * 255
+    kernel = np.ones((2, 2), np.uint8)
+    outline_mask = cv2.morphologyEx(outline_mask, cv2.MORPH_OPEN, kernel)
+    outline_mask = cv2.dilate(outline_mask, kernel, iterations=1)
+    if np.count_nonzero(outline_mask) == 0:
+        return None
+
+    return cv2.distanceTransform(255 - outline_mask, cv2.DIST_L2, 3)
+
+
+def _score_outline_alignment(outline_distance, resized_alpha, max_location, cv2, np) -> float:
+    if outline_distance is None:
+        return 0.0
+
+    template_edge = cv2.morphologyEx(
+        resized_alpha,
+        cv2.MORPH_GRADIENT,
+        np.ones((3, 3), np.uint8),
+    )
+    edge_weights = (template_edge > 0).astype(np.float32)
+    edge_count = float(edge_weights.sum())
+    if edge_count <= 0:
+        return 0.0
+
+    location_x, location_y = max_location
+    patch = outline_distance[
+        location_y : location_y + resized_alpha.shape[0],
+        location_x : location_x + resized_alpha.shape[1],
+    ]
+    if patch.shape != resized_alpha.shape:
+        return 0.0
+
+    mean_distance = float((patch * edge_weights).sum() / edge_count)
+    return 1.0 / (1.0 + mean_distance / 12.0)
+
+
+def _prepare_template_shape_mask(template_image, cv2, np):
     if template_image.shape[2] == 4:
         alpha_mask = template_image[:, :, 3]
         _, template_mask = cv2.threshold(alpha_mask, 10, 255, cv2.THRESH_BINARY)
-        return template_mask
+    else:
+        gray_image = cv2.cvtColor(template_image, cv2.COLOR_BGR2GRAY)
+        _, template_mask = cv2.threshold(gray_image, 20, 255, cv2.THRESH_BINARY)
 
-    gray_image = cv2.cvtColor(template_image, cv2.COLOR_BGR2GRAY)
-    _, template_mask = cv2.threshold(gray_image, 20, 255, cv2.THRESH_BINARY)
-    return template_mask
+    non_zero_points = cv2.findNonZero(template_mask)
+    if non_zero_points is None:
+        return None, (0, 0, 0, 0), (template_image.shape[1], template_image.shape[0])
+
+    bounds_x, bounds_y, bounds_width, bounds_height = cv2.boundingRect(non_zero_points)
+    padding = max(2, int(max(bounds_width, bounds_height) * 0.015))
+    crop_left = max(0, bounds_x - padding)
+    crop_top = max(0, bounds_y - padding)
+    crop_right = min(template_mask.shape[1], bounds_x + bounds_width + padding)
+    crop_bottom = min(template_mask.shape[0], bounds_y + bounds_height + padding)
+    cropped_mask = template_mask[crop_top:crop_bottom, crop_left:crop_right]
+
+    return (
+        cropped_mask,
+        (
+            crop_left,
+            crop_top,
+            crop_right - crop_left,
+            crop_bottom - crop_top,
+        ),
+        (template_image.shape[1], template_image.shape[0]),
+    )
 
 
 def _load_template_image(map_asset_path: Path, valorant_map: str, cv2, np):
@@ -598,20 +904,32 @@ def _orientation_operations() -> list[tuple[str, ...]]:
 
 
 def _apply_template_operations(template_mask, operations: tuple[str, ...], cv2):
-    transformed_template = template_mask
+    return _apply_template_image_operations(
+        template_mask,
+        operations,
+        cv2,
+        cv2.INTER_NEAREST,
+    )
+
+
+def _apply_template_image_operations(template_image, operations: tuple[str, ...], cv2, interpolation):
+    transformed_template = template_image
     for operation in operations:
         if operation.startswith("rot:"):
             angle = float(operation.split(":", 1)[1])
             template_height, template_width = transformed_template.shape[:2]
             center = (template_width / 2, template_height / 2)
             rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+            border_value = 0
+            if len(transformed_template.shape) == 3:
+                border_value = (0, 0, 0)
             transformed_template = cv2.warpAffine(
                 transformed_template,
                 rotation_matrix,
                 (template_width, template_height),
-                flags=cv2.INTER_NEAREST,
+                flags=interpolation,
                 borderMode=cv2.BORDER_CONSTANT,
-                borderValue=0,
+                borderValue=border_value,
             )
         elif operation == "flip_h":
             transformed_template = cv2.flip(transformed_template, 1)
@@ -665,6 +983,10 @@ def _apply_attacker_up_transform(
     valorant_map: str,
 ) -> tuple[float, float]:
     transform = get_attacker_up_transform(valorant_map)
+    if transform == "rotate_clockwise_90":
+        return _rotate_percent_point(x_percent, y_percent, 270)
+    if transform == "rotate_counterclockwise_90":
+        return _rotate_percent_point(x_percent, y_percent, 90)
     if transform == "rotate_180":
         return 100 - x_percent, 100 - y_percent
     if transform == "flip_horizontal":
@@ -691,7 +1013,7 @@ def _build_map_position(
             y_percent=None,
             map_image_width=map_width,
             map_image_height=map_height,
-            orientation="valorant_api_display",
+            orientation="attacker_up",
             confidence=confidence,
             needs_review=True,
             method=method,
@@ -706,7 +1028,7 @@ def _build_map_position(
         y_percent=clamped_y_percent,
         map_image_width=map_width,
         map_image_height=map_height,
-        orientation="valorant_api_display",
+        orientation="attacker_up",
         confidence=confidence,
         needs_review=needs_review,
         method=method,
@@ -723,13 +1045,6 @@ def _build_fallback_map_position(
     method: str,
     valorant_map: str,
 ) -> MapPosition:
-    if x_percent is not None and y_percent is not None:
-        x_percent, y_percent = _apply_attacker_up_transform(
-            x_percent,
-            y_percent,
-            valorant_map,
-        )
-
     return _build_map_position(
         x_percent=x_percent,
         y_percent=y_percent,

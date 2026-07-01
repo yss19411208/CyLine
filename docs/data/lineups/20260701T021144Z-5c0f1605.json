@@ -23,16 +23,16 @@
   "jump_label": "ジャンプなし",
   "map": "Ascent",
   "map_position": {
-    "confidence": 0.46,
+    "confidence": 0.91,
     "map_image_height": 1024,
     "map_image_width": 1024,
-    "method": "corrected_player_pin_marker_display_coordinates",
-    "needs_review": true,
-    "orientation": "valorant_api_display",
-    "x": 713.42,
-    "x_percent": 69.67,
-    "y": 322.76,
-    "y_percent": 31.52
+    "method": "map_alignment:rot:270",
+    "needs_review": false,
+    "orientation": "attacker_up",
+    "x": 712.6,
+    "x_percent": 69.59,
+    "y": 335.26,
+    "y_percent": 32.74
   },
   "schema_version": 1,
   "title": ""

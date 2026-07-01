@@ -70,6 +70,12 @@ def build_search_preview(
 
 def _orient_map_image(map_image, valorant_map: str):
     transform = get_attacker_up_transform(valorant_map)
+    if transform == "rotate_clockwise_90":
+        return map_image.rotate(-90)
+
+    if transform == "rotate_counterclockwise_90":
+        return map_image.rotate(90)
+
     if transform == "rotate_180":
         return map_image.rotate(180)
 

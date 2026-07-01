@@ -6,7 +6,9 @@ from typing import Any
 
 VALORANT_API_MAP_SOURCE = "https://valorant-api.com/v1/maps"
 
-ATTACKER_UP_TRANSFORMS: dict[str, str] = {}
+ATTACKER_UP_TRANSFORMS: dict[str, str] = {
+    "Ascent": "rotate_clockwise_90",
+}
 
 MAP_CATALOG: list[dict[str, Any]] = [
     {

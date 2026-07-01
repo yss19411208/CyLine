@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from cyline.minimap import estimate_player_position
+from cyline.minimap import _apply_attacker_up_transform, estimate_player_position
 
 
 class MinimapDetectionTest(unittest.TestCase):
@@ -46,6 +46,16 @@ class MinimapDetectionTest(unittest.TestCase):
 
         self.assertGreater(position_analysis.map_position.x_percent, 60)
         self.assertLess(position_analysis.map_position.y_percent, 45)
+
+    def test_ascent_transform_rotates_api_coordinates_to_display_position(self) -> None:
+        transformed_x_percent, transformed_y_percent = _apply_attacker_up_transform(
+            30.0,
+            30.0,
+            "Ascent",
+        )
+
+        self.assertAlmostEqual(transformed_x_percent, 70.0, places=2)
+        self.assertAlmostEqual(transformed_y_percent, 30.0, places=2)
 
 
 if __name__ == "__main__":

@@ -185,6 +185,12 @@
   }
 
   function getMapImageTransform(attackerUpTransform) {
+    if (attackerUpTransform === "rotate_clockwise_90") {
+      return "rotate(90deg)";
+    }
+    if (attackerUpTransform === "rotate_counterclockwise_90") {
+      return "rotate(270deg)";
+    }
     if (attackerUpTransform === "rotate_180") {
       return "rotate(180deg)";
     }
