@@ -1,44 +1,6 @@
 {
-  "generated_at": "2026-07-01T09:25:56+00:00",
+  "generated_at": "2026-07-01T09:26:00+00:00",
   "lineups": [
-    {
-      "ability": "cage",
-      "ability_label": "サイバーケージ",
-      "author": {
-        "display_name": "harima1954",
-        "source": "discord",
-        "user_id": "1215830583209492520"
-      },
-      "created_at": "2026-07-01T01:19:45+00:00",
-      "data_path": "data/lineups/20260701T011945Z-1cc1bef4.json",
-      "description": "",
-      "detected_position": {
-        "confidence": 0.82,
-        "method": "top_left_minimap_marker",
-        "needs_review": false,
-        "note": "左上のミニマップからプレイヤーマーカー候補を検出しました。",
-        "x_percent": 81.74,
-        "y_percent": 42.39
-      },
-      "id": "20260701T011945Z-1cc1bef4",
-      "image_path": "assets/lineups/20260701T011945Z-1cc1bef4.png",
-      "jump": false,
-      "jump_label": "ジャンプなし",
-      "map": "Breeze",
-      "map_position": {
-        "confidence": 0.41,
-        "map_image_height": 1024,
-        "map_image_width": 1024,
-        "method": "marker_percent_without_opencv",
-        "needs_review": true,
-        "orientation": "attacker_up",
-        "x": 837.02,
-        "x_percent": 81.74,
-        "y": 434.07,
-        "y_percent": 42.39
-      },
-      "title": ""
-    },
     {
       "ability": "wire",
       "ability_label": "トラップワイヤー",
