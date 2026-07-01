@@ -47,6 +47,7 @@ class Settings:
     docs_dir: Path
     data_dir: Path
     lineups_dir: Path
+    reports_dir: Path
     assets_dir: Path
     maps_dir: Path
     public_base_url: str
@@ -95,6 +96,7 @@ class Settings:
             docs_dir=docs_dir,
             data_dir=data_dir,
             lineups_dir=data_dir / "lineups",
+            reports_dir=data_dir / "reports",
             assets_dir=docs_dir / "assets" / "lineups",
             maps_dir=docs_dir / "assets" / "maps",
             public_base_url=os.getenv("CYLINE_PUBLIC_BASE_URL", "").strip(),

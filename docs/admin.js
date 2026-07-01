@@ -3,6 +3,7 @@
     maps: [],
     unknownMaps: [],
     lineups: [],
+    reports: [],
     filteredLineups: [],
     selectedLineup: null
   };
@@ -18,14 +19,20 @@
   const adminMapStage = document.getElementById("adminMapStage");
   const adminMapImage = document.getElementById("adminMapImage");
   const adminMapPins = document.getElementById("adminMapPins");
+  const adminLineupImage = document.getElementById("adminLineupImage");
+  const adminImageLink = document.getElementById("adminImageLink");
+  const adminImageStatus = document.getElementById("adminImageStatus");
+  const adminReports = document.getElementById("adminReports");
   const adminForm = document.getElementById("adminForm");
   const adminEditMap = document.getElementById("adminEditMap");
+  const adminDeleteButton = document.getElementById("adminDeleteButton");
   const adminResult = document.getElementById("adminResult");
 
   async function initialize() {
     await loadMaps();
     setupMapOptions();
     await loadLineups();
+    await loadReports();
   }
 
   async function loadMaps() {
@@ -51,6 +58,22 @@
     if (state.filteredLineups[0]) {
       selectLineup(state.filteredLineups[0].id);
     }
+  }
+
+  async function loadReports() {
+    try {
+      const response = await fetch("data/reports.json", { cache: "no-store" });
+      if (!response.ok) {
+        state.reports = [];
+        renderReports();
+        return;
+      }
+      const reportsData = await response.json();
+      state.reports = Array.isArray(reportsData.reports) ? reportsData.reports : [];
+    } catch (error) {
+      state.reports = [];
+    }
+    renderReports();
   }
 
   function updateUnknownMaps() {
@@ -178,6 +201,7 @@
     }
     state.selectedLineup = lineup;
     fillForm(lineup);
+    renderPreview(lineup);
     renderList();
     renderMap();
   }
@@ -195,6 +219,25 @@
     adminForm.elements.needs_review.checked = Boolean(position.needs_review);
     adminResult.textContent = "";
     adminResult.className = "form-result";
+  }
+
+  function renderPreview(lineup) {
+    if (!lineup?.image_path) {
+      adminLineupImage.onerror = null;
+      adminLineupImage.removeAttribute("src");
+      adminLineupImage.alt = "";
+      adminImageLink.removeAttribute("href");
+      adminImageStatus.textContent = "画像がありません。";
+      return;
+    }
+
+    adminLineupImage.onerror = () => {
+      adminImageStatus.textContent = `画像を読み込めません: ${lineup.image_path}`;
+    };
+    adminLineupImage.src = lineup.image_path;
+    adminLineupImage.alt = lineup.title || `${lineup.map} ${lineup.ability_label}`;
+    adminImageLink.href = lineup.image_path;
+    adminImageStatus.textContent = lineup.image_path;
   }
 
   function renderMap() {
@@ -324,6 +367,65 @@
     }
   }
 
+  async function deleteSelectedLineup() {
+    if (!state.selectedLineup) {
+      showError("削除する定点を選択してください。");
+      return;
+    }
+
+    const config = window.CYLINE_CONFIG || {};
+    const apiBaseUrl = (config.apiBaseUrl || "").replace(/\/$/, "");
+    const token = adminToken.value.trim();
+    adminResult.className = "form-result";
+    adminResult.textContent = "";
+    if (!apiBaseUrl) {
+      showError("APIのURLが設定されていません。");
+      return;
+    }
+    if (!token) {
+      showError("管理トークンを入力してください。");
+      return;
+    }
+
+    const lineupId = state.selectedLineup.id;
+    const confirmed = window.confirm(
+      `定点 ${lineupId} を削除します。画像とJSONも削除され、元に戻せません。`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    adminDeleteButton.disabled = true;
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/admin/lineups/${encodeURIComponent(lineupId)}`, {
+        method: "DELETE",
+        headers: {
+          "X-CyLine-Admin-Token": token
+        }
+      });
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || `HTTP ${response.status}`);
+      }
+
+      state.lineups = state.lineups.filter((lineup) => lineup.id !== lineupId);
+      state.selectedLineup = null;
+      updateUnknownMaps();
+      setupMapOptions();
+      applyFilters();
+      if (state.filteredLineups[0]) {
+        selectLineup(state.filteredLineups[0].id);
+      } else {
+        clearSelection();
+      }
+      adminResult.textContent = `削除しました: ${lineupId}`;
+    } catch (error) {
+      showError(`削除に失敗しました: ${error.message}`);
+    } finally {
+      adminDeleteButton.disabled = false;
+    }
+  }
+
   function replaceLineup(record) {
     state.lineups = state.lineups.filter((lineup) => lineup.id !== record.id);
     state.lineups.push(record);
@@ -331,6 +433,50 @@
     updateUnknownMaps();
     setupMapOptions();
     applyFilters();
+  }
+
+  function clearSelection() {
+    adminForm.reset();
+    adminLineupImage.removeAttribute("src");
+    adminLineupImage.alt = "";
+    adminImageLink.removeAttribute("href");
+    adminImageStatus.textContent = "定点を選択してください。";
+    adminMapPins.innerHTML = "";
+  }
+
+  function renderReports() {
+    adminReports.innerHTML = "";
+    if (state.reports.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "empty compact-empty";
+      empty.textContent = "報告はありません。";
+      adminReports.appendChild(empty);
+      return;
+    }
+
+    state.reports.slice(0, 20).forEach((report) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "report-item";
+
+      const title = document.createElement("span");
+      title.textContent = report.reason || "報告";
+
+      const meta = document.createElement("small");
+      meta.textContent = `${report.lineup_map || "不明"} / ${report.lineup_id || "不明"}`;
+
+      const message = document.createElement("small");
+      message.textContent = report.message || "";
+
+      button.append(title, meta, message);
+      button.addEventListener("click", () => {
+        const lineup = state.lineups.find((item) => item.id === report.lineup_id);
+        if (lineup) {
+          selectLineup(lineup.id);
+        }
+      });
+      adminReports.appendChild(button);
+    });
   }
 
   function showError(message) {
@@ -414,6 +560,7 @@
   adminEditMap.addEventListener("change", renderMap);
   adminMapStage.addEventListener("click", setFormPositionFromMap);
   adminForm.addEventListener("submit", submitAdminUpdate);
+  adminDeleteButton.addEventListener("click", deleteSelectedLineup);
   initialize().catch((error) => {
     adminStatus.textContent = "読み込み失敗";
     adminList.textContent = error.message;

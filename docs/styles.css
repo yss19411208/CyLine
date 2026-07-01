@@ -8,6 +8,7 @@
   --accent: #2dd4bf;
   --accent-strong: #14b8a6;
   --danger: #fb7185;
+  --danger-strong: #e11d48;
   --line: #2c383b;
 }
 
@@ -146,6 +147,18 @@ button:disabled {
   gap: 10px;
 }
 
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 10px;
+}
+
+.danger-button {
+  border-color: var(--danger-strong);
+  background: var(--danger-strong);
+  color: #fff7f8;
+}
+
 .lineup-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -241,7 +254,7 @@ button:disabled {
 .admin-list {
   display: grid;
   gap: 8px;
-  max-height: calc(100vh - 330px);
+  max-height: calc(100vh - 480px);
   overflow: auto;
 }
 
@@ -285,6 +298,53 @@ button:disabled {
   cursor: crosshair;
 }
 
+.admin-preview {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-image-link {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b0f10;
+}
+
+.admin-lineup-image {
+  display: block;
+  width: 100%;
+  max-height: 56vh;
+  object-fit: contain;
+}
+
+.admin-reports {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-reports h2 {
+  font-size: 16px;
+}
+
+.report-item {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 10px;
+  border-color: var(--line);
+  background: var(--surface-strong);
+  color: var(--text);
+  text-align: left;
+}
+
+.report-item small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .lineup-card {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -296,7 +356,7 @@ button:disabled {
 .lineup-card img {
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   background: #0b0f10;
 }
@@ -330,6 +390,10 @@ button:disabled {
   padding: 32px 4px;
 }
 
+.compact-empty {
+  padding: 8px 0;
+}
+
 dialog {
   width: min(980px, calc(100vw - 28px));
   border: 1px solid var(--line);
@@ -353,9 +417,23 @@ dialog::backdrop {
 
 .detail img {
   width: 100%;
+  max-height: 72vh;
   border-radius: 8px;
   object-fit: contain;
   background: #0b0f10;
+}
+
+.report-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.report-form h3 {
+  margin: 0;
+  font-size: 16px;
 }
 
 .detail dl {
@@ -430,6 +508,10 @@ dialog::backdrop {
   }
 
   .detail {
+    grid-template-columns: 1fr;
+  }
+
+  .button-row {
     grid-template-columns: 1fr;
   }
 }

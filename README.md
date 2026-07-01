@@ -16,6 +16,8 @@ and from a GitHub Pages front end.
 - Minimap position estimate with manual correction.
 - Discord lineup search.
 - Admin-only edit page for correcting lineup metadata and coordinates.
+- Site-side lineup reports saved under `docs/data/reports/`.
+- Admin-only lineup image preview and delete actions.
 
 ## Important security note
 
@@ -138,10 +140,22 @@ http://127.0.0.1:8000
 Opening that URL should return a small JSON status response. The registration
 form sends submissions to `http://127.0.0.1:8000/api/lineups`.
 
+The public report form sends lineup reports to:
+
+```text
+POST http://127.0.0.1:8000/api/reports
+```
+
 The admin update API listens on:
 
 ```text
 PATCH http://127.0.0.1:8000/api/admin/lineups/<id>
+```
+
+The admin delete API listens on:
+
+```text
+DELETE http://127.0.0.1:8000/api/admin/lineups/<id>
 ```
 
 It requires `CYLINE_ADMIN_TOKEN` through the `X-CyLine-Admin-Token` header.
@@ -198,7 +212,8 @@ The admin editor loads the same static JSON as the viewer, then sends updates
 to `cyline-api`. Use the map preview click target to correct bad coordinates.
 Lineups whose map name is not in the current Valorant map catalog are shown as
 `（未対応）` in the admin list and map selectors so an admin can notice and fix
-them.
+them. The admin editor also shows the registered screenshot, recent reports,
+and a token-protected delete button.
 
 ## Map assets
 

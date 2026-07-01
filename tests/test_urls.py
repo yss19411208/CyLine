@@ -12,6 +12,7 @@ class UrlTest(unittest.TestCase):
             docs_dir=Path("docs"),
             data_dir=Path("docs/data"),
             lineups_dir=Path("docs/data/lineups"),
+            reports_dir=Path("docs/data/reports"),
             assets_dir=Path("docs/assets/lineups"),
             maps_dir=Path("docs/assets/maps"),
             public_base_url="https://yss19411208.github.io/CyLine/",

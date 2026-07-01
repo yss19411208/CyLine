@@ -40,6 +40,8 @@
   const detailMeta = document.getElementById("detailMeta");
   const detailDescription = document.getElementById("detailDescription");
   const closeDialog = document.getElementById("closeDialog");
+  const reportForm = document.getElementById("reportForm");
+  const reportResult = document.getElementById("reportResult");
   const mapTitle = document.getElementById("mapTitle");
   const mapStatus = document.getElementById("mapStatus");
   const mapImage = document.getElementById("mapImage");
@@ -255,6 +257,11 @@
     detailTitle.textContent = lineup.title || `${lineup.map} ${lineup.ability_label}`;
     detailDescription.textContent = lineup.description || "";
     detailMeta.innerHTML = "";
+    reportForm.elements.lineup_id.value = lineup.id;
+    reportForm.reset();
+    reportForm.elements.lineup_id.value = lineup.id;
+    reportResult.className = "form-result";
+    reportResult.textContent = "";
 
     const position = getPosition(lineup);
     const fields = [
@@ -340,6 +347,55 @@
     }
   }
 
+  async function submitReport(event) {
+    event.preventDefault();
+    reportResult.className = "form-result";
+    reportResult.textContent = "";
+
+    const config = window.CYLINE_CONFIG || {};
+    const apiBaseUrl = (config.apiBaseUrl || "").replace(/\/$/, "");
+    if (!apiBaseUrl) {
+      reportResult.classList.add("error");
+      reportResult.textContent = "APIのURLが設定されていません。";
+      return;
+    }
+
+    const lineupId = reportForm.elements.lineup_id.value;
+    const reason = reportForm.elements.reason.value;
+    const message = reportForm.elements.message.value;
+    const reporterName = reportForm.elements.reporter_name.value;
+    const submitButton = reportForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/reports`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          lineup_id: lineupId,
+          reason,
+          message,
+          reporter_name: reporterName
+        })
+      });
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || `HTTP ${response.status}`);
+      }
+
+      reportResult.textContent = "報告しました。";
+      reportForm.elements.message.value = "";
+      reportForm.elements.reporter_name.value = "";
+    } catch (error) {
+      reportResult.classList.add("error");
+      reportResult.textContent = buildReportErrorMessage(error, apiBaseUrl);
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
   function buildRegistrationErrorMessage(error, apiBaseUrl) {
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       return `登録に失敗しました: APIに接続できません。cyline-apiが起動しているか、API URL (${apiBaseUrl}) が正しいか確認してください。`;
@@ -348,10 +404,19 @@
     return `登録に失敗しました: ${error.message}`;
   }
 
+  function buildReportErrorMessage(error, apiBaseUrl) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      return `報告に失敗しました: APIに接続できません。cyline-apiが起動しているか、API URL (${apiBaseUrl}) が正しいか確認してください。`;
+    }
+
+    return `報告に失敗しました: ${error.message}`;
+  }
+
   mapFilter.addEventListener("change", applyFilters);
   abilityFilter.addEventListener("change", applyFilters);
   jumpFilter.addEventListener("change", applyFilters);
   registerForm.addEventListener("submit", submitRegistration);
+  reportForm.addEventListener("submit", submitReport);
   closeDialog.addEventListener("click", () => detailDialog.close());
   initialize();
 })();

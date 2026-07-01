@@ -28,8 +28,10 @@ def create_app(settings: Settings | None = None) -> Flask:
                 "service": "CyLine API",
                 "status": "ok",
                 "endpoints": {
+                    "admin_delete_lineup": "/api/admin/lineups/<id>",
                     "admin_update_lineup": "/api/admin/lineups/<id>",
                     "options": "/api/options",
+                    "report_lineup": "/api/reports",
                     "register_lineup": "/api/lineups",
                 },
                 "note": "Discord botは別プロセスでcyline-botを起動してください。",
@@ -106,6 +108,49 @@ def create_app(settings: Settings | None = None) -> Flask:
                     "git": git_result.__dict__,
                 }
             )
+        except ValueError as validation_error:
+            return jsonify({"error": str(validation_error)}), 400
+        except Exception as unexpected_error:
+            return jsonify({"error": str(unexpected_error)}), 500
+
+    @app.delete("/api/admin/lineups/<lineup_id>")
+    def delete_lineup(lineup_id: str):
+        authorization_error = _check_admin_authorization(active_settings)
+        if authorization_error is not None:
+            return authorization_error
+
+        try:
+            record, git_result = service.delete_lineup(lineup_id)
+            return jsonify(
+                {
+                    "deleted": True,
+                    "record": record,
+                    "git": git_result.__dict__,
+                }
+            )
+        except ValueError as validation_error:
+            return jsonify({"error": str(validation_error)}), 400
+        except Exception as unexpected_error:
+            return jsonify({"error": str(unexpected_error)}), 500
+
+    @app.post("/api/reports")
+    def report_lineup():
+        authorization_error = _check_authorization(active_settings)
+        if authorization_error is not None:
+            return authorization_error
+
+        report_input = request.get_json(silent=True)
+        if not isinstance(report_input, dict):
+            return jsonify({"error": "JSON bodyが必要です。"}), 400
+
+        try:
+            report_record, git_result = service.report_lineup(report_input)
+            return jsonify(
+                {
+                    "report": report_record,
+                    "git": git_result.__dict__,
+                }
+            ), 201
         except ValueError as validation_error:
             return jsonify({"error": str(validation_error)}), 400
         except Exception as unexpected_error:

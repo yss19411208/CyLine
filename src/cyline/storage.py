@@ -115,20 +115,7 @@ class LineupStorage:
         _write_json(index_path, index_data)
 
     def update_lineup(self, lineup_id: str, updates: dict) -> tuple[dict, list[Path]]:
-        if not lineup_id or "/" in lineup_id or "\\" in lineup_id:
-            raise ValueError("定点IDが不正です。")
-
-        json_path = self.settings.lineups_dir / f"{lineup_id}.json"
-        if not json_path.exists():
-            raise ValueError(f"定点が見つかりません: {lineup_id}")
-
-        try:
-            record = json.loads(json_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as json_error:
-            raise ValueError("定点JSONを読み込めません。") from json_error
-
-        if record.get("id") != lineup_id:
-            raise ValueError("定点JSONのIDが一致しません。")
+        record, json_path = self._read_lineup_record(lineup_id)
 
         if "title" in updates:
             record["title"] = str(updates.get("title") or "").strip()
@@ -181,10 +168,124 @@ class LineupStorage:
         self._update_index(record)
         return record, [json_path, self.settings.data_dir / "index.json"]
 
+    def delete_lineup(self, lineup_id: str) -> tuple[dict, list[Path]]:
+        record, json_path = self._read_lineup_record(lineup_id)
+        changed_paths = [json_path]
+
+        image_relative_path = str(record.get("image_path") or "")
+        if image_relative_path:
+            image_path = _resolve_docs_relative_path(self.settings.docs_dir, image_relative_path)
+            if image_path.exists():
+                image_path.unlink()
+                changed_paths.append(image_path)
+
+        json_path.unlink()
+        index_path = self._remove_from_index(lineup_id)
+        changed_paths.append(index_path)
+        return record, changed_paths
+
+    def save_report(self, report_input: dict) -> tuple[dict, list[Path]]:
+        lineup_id = str(report_input.get("lineup_id") or "").strip()
+        lineup_record, _json_path = self._read_lineup_record(lineup_id)
+        reason = _coerce_limited_text(report_input.get("reason"), "reason", 120, required=True)
+        message = _coerce_limited_text(report_input.get("message"), "message", 1200, required=False)
+        reporter_name = _coerce_limited_text(
+            report_input.get("reporter_name"),
+            "reporter_name",
+            120,
+            required=False,
+        )
+
+        created_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+        report_id = _build_lineup_id(created_at)
+        report_relative_path = f"data/reports/{report_id}.json"
+        report_path = self.settings.docs_dir / report_relative_path
+
+        self.settings.reports_dir.mkdir(parents=True, exist_ok=True)
+        report_record = {
+            "schema_version": 1,
+            "id": report_id,
+            "lineup_id": lineup_id,
+            "lineup_title": lineup_record.get("title") or "",
+            "lineup_map": lineup_record.get("map") or "",
+            "reason": reason,
+            "message": message,
+            "reporter_name": reporter_name,
+            "status": "open",
+            "data_path": report_relative_path,
+            "created_at": created_at,
+        }
+
+        _write_json(report_path, report_record)
+        reports_index_path = self._update_reports_index(report_record)
+        return report_record, [report_path, reports_index_path]
+
     def _valid_maps(self) -> set[str]:
         from .constants import VALORANT_MAPS
 
         return set(VALORANT_MAPS)
+
+    def _read_lineup_record(self, lineup_id: str) -> tuple[dict, Path]:
+        if not lineup_id or "/" in lineup_id or "\\" in lineup_id:
+            raise ValueError("定点IDが不正です。")
+
+        json_path = self.settings.lineups_dir / f"{lineup_id}.json"
+        if not json_path.exists():
+            raise ValueError(f"定点が見つかりません: {lineup_id}")
+
+        try:
+            record = json.loads(json_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as json_error:
+            raise ValueError("定点JSONを読み込めません。") from json_error
+
+        if record.get("id") != lineup_id:
+            raise ValueError("定点JSONのIDが一致しません。")
+
+        return record, json_path
+
+    def _remove_from_index(self, lineup_id: str) -> Path:
+        index_path = self.settings.data_dir / "index.json"
+        if not index_path.exists():
+            index_data = {"schema_version": 1, "generated_at": None, "lineups": []}
+        else:
+            try:
+                index_data = json.loads(index_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                index_data = {"schema_version": 1, "generated_at": None, "lineups": []}
+
+        index_data["schema_version"] = 1
+        index_data["generated_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
+        index_data["lineups"] = [
+            lineup for lineup in index_data.get("lineups", []) if lineup.get("id") != lineup_id
+        ]
+        _write_json(index_path, index_data)
+        return index_path
+
+    def _update_reports_index(self, report_record: dict) -> Path:
+        reports_index_path = self.settings.data_dir / "reports.json"
+        if reports_index_path.exists():
+            try:
+                reports_index_data = json.loads(reports_index_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                reports_index_data = {"schema_version": 1, "generated_at": None, "reports": []}
+        else:
+            reports_index_data = {"schema_version": 1, "generated_at": None, "reports": []}
+
+        existing_reports = reports_index_data.get("reports", [])
+        reports_index_data["schema_version"] = 1
+        reports_index_data["generated_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
+        reports_index_data["reports"] = [
+            report
+            for report in existing_reports
+            if report.get("id") != report_record["id"]
+        ]
+        reports_index_data["reports"].append(report_record)
+        reports_index_data["reports"].sort(
+            key=lambda report: report.get("created_at", ""),
+            reverse=True,
+        )
+        _write_json(reports_index_path, reports_index_data)
+        return reports_index_path
 
 
 def _build_lineup_id(created_at: str) -> str:
@@ -231,6 +332,30 @@ def _write_json(path: Path, data: dict) -> None:
         json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _resolve_docs_relative_path(docs_dir: Path, relative_path: str) -> Path:
+    resolved_docs_dir = docs_dir.resolve()
+    resolved_path = (docs_dir / relative_path).resolve()
+    try:
+        resolved_path.relative_to(resolved_docs_dir)
+    except ValueError as path_error:
+        raise ValueError(f"docs外のファイルは削除できません: {relative_path}") from path_error
+    return resolved_path
+
+
+def _coerce_limited_text(
+    value: object,
+    field_name: str,
+    max_length: int,
+    required: bool,
+) -> str:
+    text = str(value or "").strip()
+    if required and not text:
+        raise ValueError(f"{field_name}は必須です。")
+    if len(text) > max_length:
+        raise ValueError(f"{field_name}は{max_length}文字以内で指定してください。")
+    return text
 
 
 def _coerce_bool(value: object) -> bool:

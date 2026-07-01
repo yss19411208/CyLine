@@ -123,6 +123,74 @@ class LineupStorageTest(unittest.TestCase):
             self.assertEqual(updated_record["map"], "Legacy Map")
             self.assertEqual(updated_record["map_position"]["method"], "admin_manual")
 
+    def test_delete_lineup_removes_record_image_and_index(self) -> None:
+        with tempfile.TemporaryDirectory() as workspace_directory:
+            settings = _build_settings(Path(workspace_directory))
+            docs_dir = settings.docs_dir
+            storage = LineupStorage(settings)
+            lineup_input = LineupInput(
+                valorant_map="Ascent",
+                ability="camera",
+                jump=False,
+                title="delete me",
+                description="old",
+                manual_position=ManualPosition(x_percent=50, y_percent=25),
+            )
+            author = Author(source="test", user_id="1", display_name="Tester")
+            record, _changed_paths = storage.save_lineup(
+                lineup_input=lineup_input,
+                screenshot_bytes=_build_png_bytes(),
+                original_filename="screenshot.png",
+                author=author,
+            )
+
+            deleted_record, changed_paths = storage.delete_lineup(record["id"])
+            index_data = json.loads((settings.data_dir / "index.json").read_text(encoding="utf-8"))
+
+            self.assertEqual(deleted_record["id"], record["id"])
+            self.assertFalse((docs_dir / record["image_path"]).exists())
+            self.assertFalse((docs_dir / record["data_path"]).exists())
+            self.assertEqual(index_data["lineups"], [])
+            self.assertIn(settings.data_dir / "index.json", changed_paths)
+
+    def test_save_report_writes_report_and_index(self) -> None:
+        with tempfile.TemporaryDirectory() as workspace_directory:
+            settings = _build_settings(Path(workspace_directory))
+            storage = LineupStorage(settings)
+            lineup_input = LineupInput(
+                valorant_map="Ascent",
+                ability="camera",
+                jump=False,
+                title="reported",
+                description="old",
+                manual_position=ManualPosition(x_percent=50, y_percent=25),
+            )
+            author = Author(source="test", user_id="1", display_name="Tester")
+            lineup_record, _changed_paths = storage.save_lineup(
+                lineup_input=lineup_input,
+                screenshot_bytes=_build_png_bytes(),
+                original_filename="screenshot.png",
+                author=author,
+            )
+
+            report_record, changed_paths = storage.save_report(
+                {
+                    "lineup_id": lineup_record["id"],
+                    "reason": "座標が違う",
+                    "message": "右にずれています",
+                    "reporter_name": "Reporter",
+                }
+            )
+            reports_index_data = json.loads(
+                (settings.data_dir / "reports.json").read_text(encoding="utf-8")
+            )
+
+            self.assertEqual(report_record["lineup_id"], lineup_record["id"])
+            self.assertEqual(report_record["status"], "open")
+            self.assertTrue((settings.docs_dir / report_record["data_path"]).exists())
+            self.assertEqual(reports_index_data["reports"][0]["id"], report_record["id"])
+            self.assertIn(settings.data_dir / "reports.json", changed_paths)
+
 
 def _build_png_bytes() -> bytes:
     try:
@@ -142,6 +210,7 @@ def _build_settings(repo_root: Path) -> Settings:
         docs_dir=docs_dir,
         data_dir=docs_dir / "data",
         lineups_dir=docs_dir / "data" / "lineups",
+        reports_dir=docs_dir / "data" / "reports",
         assets_dir=docs_dir / "assets" / "lineups",
         maps_dir=docs_dir / "assets" / "maps",
         public_base_url="https://yss19411208.github.io/CyLine/",

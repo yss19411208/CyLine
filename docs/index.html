@@ -105,6 +105,30 @@
           <h2 id="detailTitle"></h2>
           <dl id="detailMeta"></dl>
           <p id="detailDescription"></p>
+          <form class="report-form" id="reportForm">
+            <input type="hidden" name="lineup_id">
+            <h3>報告</h3>
+            <label>
+              理由
+              <select name="reason" required>
+                <option value="座標が違う">座標が違う</option>
+                <option value="画像が違う">画像が違う</option>
+                <option value="マップが違う">マップが違う</option>
+                <option value="重複">重複</option>
+                <option value="その他">その他</option>
+              </select>
+            </label>
+            <label>
+              内容
+              <textarea name="message" rows="3" maxlength="1200"></textarea>
+            </label>
+            <label>
+              名前
+              <input type="text" name="reporter_name" maxlength="120">
+            </label>
+            <button type="submit">報告</button>
+            <p class="form-result" id="reportResult"></p>
+          </form>
         </div>
       </article>
     </dialog>

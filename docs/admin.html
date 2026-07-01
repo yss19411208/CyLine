@@ -34,6 +34,10 @@
           要確認のみ
         </label>
         <div class="admin-list" id="adminList"></div>
+        <div class="admin-reports">
+          <h2>報告</h2>
+          <div id="adminReports"></div>
+        </div>
       </section>
 
       <section class="content">
@@ -46,6 +50,16 @@
             <img id="adminMapImage" alt="">
             <div class="map-pins" id="adminMapPins"></div>
           </div>
+        </section>
+
+        <section class="panel admin-preview">
+          <div class="map-header">
+            <h2>登録画像</h2>
+            <p id="adminImageStatus">定点を選択してください</p>
+          </div>
+          <a id="adminImageLink" class="admin-image-link" href="#" target="_blank" rel="noreferrer">
+            <img id="adminLineupImage" class="admin-lineup-image" alt="">
+          </a>
         </section>
 
         <section class="panel admin-editor">
@@ -92,7 +106,10 @@
               <input type="checkbox" name="needs_review">
               要確認
             </label>
-            <button type="submit">更新</button>
+            <div class="button-row">
+              <button type="submit">更新</button>
+              <button type="button" id="adminDeleteButton" class="danger-button">削除</button>
+            </div>
             <p class="form-result" id="adminResult"></p>
           </form>
         </section>
