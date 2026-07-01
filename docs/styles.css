@@ -261,6 +261,11 @@ button:disabled {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+.admin-list-item.unsupported-map {
+  border-color: #fbbf24;
+  box-shadow: inset 3px 0 0 #fbbf24;
+}
+
 .admin-list-item small {
   color: var(--muted);
 }

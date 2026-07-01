@@ -1,6 +1,7 @@
 (function () {
   const state = {
     maps: [],
+    unknownMaps: [],
     lineups: [],
     filteredLineups: [],
     selectedLineup: null
@@ -36,23 +37,6 @@
     state.maps = Array.isArray(mapsData.maps) ? mapsData.maps : [];
   }
 
-  function setupMapOptions() {
-    adminMapFilter.innerHTML = '<option value="">すべて</option>';
-    adminEditMap.innerHTML = "";
-    state.maps.forEach((mapEntry) => {
-      const mapName = mapEntry.display_name;
-      const filterOption = document.createElement("option");
-      filterOption.value = mapName;
-      filterOption.textContent = mapName;
-      adminMapFilter.appendChild(filterOption);
-
-      const editOption = document.createElement("option");
-      editOption.value = mapName;
-      editOption.textContent = mapName;
-      adminEditMap.appendChild(editOption);
-    });
-  }
-
   async function loadLineups() {
     const response = await fetch("data/index.json", { cache: "no-store" });
     if (!response.ok) {
@@ -60,10 +44,66 @@
     }
     const indexData = await response.json();
     state.lineups = Array.isArray(indexData.lineups) ? indexData.lineups : [];
+    updateUnknownMaps();
+    setupMapOptions();
     adminStatus.textContent = `${state.lineups.length}件`;
     applyFilters();
     if (state.filteredLineups[0]) {
       selectLineup(state.filteredLineups[0].id);
+    }
+  }
+
+  function updateUnknownMaps() {
+    const knownMaps = new Set(state.maps.map((mapEntry) => mapEntry.display_name));
+    const unknownMaps = state.lineups
+      .map((lineup) => lineup.map)
+      .filter((mapName) => mapName && !knownMaps.has(mapName));
+    state.unknownMaps = Array.from(new Set(unknownMaps)).sort((left, right) =>
+      String(left).localeCompare(String(right), "ja")
+    );
+  }
+
+  function setupMapOptions() {
+    const previousFilterMap = adminMapFilter.value;
+    const previousEditMap = adminEditMap.value;
+
+    adminMapFilter.innerHTML = "";
+    appendMapOption(adminMapFilter, "", "すべて");
+    adminEditMap.innerHTML = "";
+
+    state.maps.forEach((mapEntry) => {
+      appendMapOption(adminMapFilter, mapEntry.display_name, mapEntry.display_name);
+      appendMapOption(adminEditMap, mapEntry.display_name, mapEntry.display_name);
+    });
+
+    state.unknownMaps.forEach((mapName) => {
+      const label = `${mapName}（未対応）`;
+      appendMapOption(adminMapFilter, mapName, label, true);
+      appendMapOption(adminEditMap, mapName, label, true);
+    });
+
+    setSelectValueIfPresent(adminMapFilter, previousFilterMap, "");
+    setSelectValueIfPresent(adminEditMap, previousEditMap, state.maps[0]?.display_name || "");
+  }
+
+  function appendMapOption(selectElement, value, label, unsupported = false) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    if (unsupported) {
+      option.dataset.unsupported = "true";
+    }
+    selectElement.appendChild(option);
+  }
+
+  function setSelectValueIfPresent(selectElement, preferredValue, fallbackValue) {
+    const values = Array.from(selectElement.options).map((option) => option.value);
+    if (values.includes(preferredValue)) {
+      selectElement.value = preferredValue;
+      return;
+    }
+    if (values.includes(fallbackValue)) {
+      selectElement.value = fallbackValue;
     }
   }
 
@@ -112,13 +152,19 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "admin-list-item";
+      if (isUnknownMap(lineup.map)) {
+        button.classList.add("unsupported-map");
+      }
       if (state.selectedLineup?.id === lineup.id) {
         button.classList.add("active");
       }
+
       const title = document.createElement("span");
-      title.textContent = lineup.title || `${lineup.map} ${lineup.ability_label}`;
+      title.textContent = lineup.title || `${formatMapName(lineup.map)} ${lineup.ability_label}`;
+
       const meta = document.createElement("small");
-      meta.textContent = `${lineup.map} / ${formatPosition(getPosition(lineup))}`;
+      meta.textContent = `${formatMapName(lineup.map)} / ${formatPosition(getPosition(lineup))}`;
+
       button.append(title, meta);
       button.addEventListener("click", () => selectLineup(lineup.id));
       adminList.appendChild(button);
@@ -152,17 +198,18 @@
   }
 
   function renderMap() {
-    const selectedMap = (
-      state.selectedLineup
-        ? adminForm.elements.map.value
-        : adminMapFilter.value || state.maps[0]?.display_name || ""
-    );
-    const mapEntry = state.maps.find((entry) => entry.display_name === selectedMap);
-    adminMapTitle.textContent = selectedMap || "マップ";
+    const selectedMap = getSelectedMapName();
+    const mapEntry = getMapEntry(selectedMap);
+    adminMapTitle.textContent = selectedMap ? formatMapName(selectedMap) : "マップ";
     adminMapPins.innerHTML = "";
+
     if (!mapEntry) {
       adminMapImage.removeAttribute("src");
-      adminMapStatus.textContent = "マップを選択してください";
+      adminMapImage.alt = "";
+      adminMapImage.style.transform = "";
+      adminMapStatus.textContent = selectedMap
+        ? "現在のVALORANTマップ一覧にないマップです。編集欄で正しいマップへ変更してください。"
+        : "マップを選択してください。";
       return;
     }
 
@@ -195,15 +242,21 @@
   }
 
   function setFormPositionFromMap(event) {
-    if (!state.selectedLineup) {
+    if (!state.selectedLineup || !getMapEntry(getSelectedMapName())) {
       return;
     }
+
     const rect = adminMapStage.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
     const xPercent = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
     const yPercent = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
     adminForm.elements.position_x.value = xPercent.toFixed(2);
     adminForm.elements.position_y.value = yPercent.toFixed(2);
     adminForm.elements.needs_review.checked = false;
+
     const position = getPosition(state.selectedLineup);
     position.x_percent = Number(xPercent.toFixed(2));
     position.y_percent = Number(yPercent.toFixed(2));
@@ -227,6 +280,13 @@
       return;
     }
 
+    const positionX = Number(adminForm.elements.position_x.value);
+    const positionY = Number(adminForm.elements.position_y.value);
+    if (!Number.isFinite(positionX) || !Number.isFinite(positionY)) {
+      showError("座標は数値で入力してください。");
+      return;
+    }
+
     const lineupId = adminForm.elements.id.value;
     const body = {
       title: adminForm.elements.title.value,
@@ -234,8 +294,8 @@
       map: adminForm.elements.map.value,
       ability: adminForm.elements.ability.value,
       jump: adminForm.elements.jump.checked,
-      position_x: Number(adminForm.elements.position_x.value),
-      position_y: Number(adminForm.elements.position_y.value),
+      position_x: positionX,
+      position_y: positionY,
       needs_review: adminForm.elements.needs_review.checked
     };
 
@@ -268,6 +328,8 @@
     state.lineups = state.lineups.filter((lineup) => lineup.id !== record.id);
     state.lineups.push(record);
     state.lineups.sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
+    updateUnknownMaps();
+    setupMapOptions();
     applyFilters();
   }
 
@@ -296,6 +358,31 @@
     }
     const reviewSuffix = position.needs_review ? " / 要確認" : "";
     return `${Number(position.x_percent).toFixed(2)}, ${Number(position.y_percent).toFixed(2)}${reviewSuffix}`;
+  }
+
+  function formatMapName(mapName) {
+    if (!mapName) {
+      return "不明";
+    }
+    return isUnknownMap(mapName) ? `${mapName}（未対応）` : mapName;
+  }
+
+  function isUnknownMap(mapName) {
+    if (!mapName) {
+      return false;
+    }
+    return !state.maps.some((entry) => entry.display_name === mapName);
+  }
+
+  function getMapEntry(mapName) {
+    return state.maps.find((entry) => entry.display_name === mapName);
+  }
+
+  function getSelectedMapName() {
+    if (state.selectedLineup) {
+      return adminForm.elements.map.value;
+    }
+    return adminMapFilter.value || state.maps[0]?.display_name || state.unknownMaps[0] || "";
   }
 
   function getMapImageTransform(attackerUpTransform) {

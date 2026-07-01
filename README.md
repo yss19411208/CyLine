@@ -172,6 +172,16 @@ Local preview with Node.js:
 node tools/static_server.mjs 8080 docs
 ```
 
+PowerShell helper:
+
+```powershell
+.\tools\start_static_server.ps1
+```
+
+Keep that PowerShell window open while using `http://127.0.0.1:8080/`.
+`ERR_CONNECTION_REFUSED` means the local static server is not running on that
+port, or another port was used.
+
 Open:
 
 ```text
@@ -186,6 +196,9 @@ http://127.0.0.1:8080/admin.html
 
 The admin editor loads the same static JSON as the viewer, then sends updates
 to `cyline-api`. Use the map preview click target to correct bad coordinates.
+Lineups whose map name is not in the current Valorant map catalog are shown as
+`（未対応）` in the admin list and map selectors so an admin can notice and fix
+them.
 
 ## Map assets
 

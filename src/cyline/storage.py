@@ -138,7 +138,10 @@ class LineupStorage:
 
         if "map" in updates:
             valorant_map = str(updates.get("map") or "").strip()
-            if valorant_map not in self._valid_maps():
+            # Old records may contain maps that are no longer in the catalog.
+            # Admins can keep editing those records, but changing to another
+            # unknown map is still rejected.
+            if valorant_map not in self._valid_maps() and valorant_map != record.get("map"):
                 raise ValueError(f"不明なマップです: {valorant_map}")
             record["map"] = valorant_map
 

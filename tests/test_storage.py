@@ -1,3 +1,4 @@
+import json
 import tempfile
 from io import BytesIO
 import unittest
@@ -80,6 +81,47 @@ class LineupStorageTest(unittest.TestCase):
             self.assertEqual(updated_record["map_position"]["method"], "admin_manual")
             self.assertEqual(updated_record["map_position"]["x_percent"], 82.5)
             self.assertIn(settings.data_dir / "index.json", changed_paths)
+
+    def test_update_lineup_keeps_existing_unknown_map(self) -> None:
+        with tempfile.TemporaryDirectory() as workspace_directory:
+            settings = _build_settings(Path(workspace_directory))
+            storage = LineupStorage(settings)
+            lineup_input = LineupInput(
+                valorant_map="Ascent",
+                ability="camera",
+                jump=False,
+                title="before",
+                description="old",
+                manual_position=ManualPosition(x_percent=50, y_percent=25),
+            )
+            author = Author(source="test", user_id="1", display_name="Tester")
+            record, _changed_paths = storage.save_lineup(
+                lineup_input=lineup_input,
+                screenshot_bytes=_build_png_bytes(),
+                original_filename="screenshot.png",
+                author=author,
+            )
+            record_path = settings.docs_dir / record["data_path"]
+            record_data = json.loads(record_path.read_text(encoding="utf-8"))
+            record_data["map"] = "Legacy Map"
+            record_path.write_text(
+                json.dumps(record_data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            updated_record, _changed_paths = storage.update_lineup(
+                record["id"],
+                {
+                    "title": "after",
+                    "map": "Legacy Map",
+                    "position_x": 10,
+                    "position_y": 20,
+                },
+            )
+
+            self.assertEqual(updated_record["title"], "after")
+            self.assertEqual(updated_record["map"], "Legacy Map")
+            self.assertEqual(updated_record["map_position"]["method"], "admin_manual")
 
 
 def _build_png_bytes() -> bytes:
