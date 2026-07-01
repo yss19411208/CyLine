@@ -1,4 +1,6 @@
 (function () {
+  const ADMIN_API_BASE_URL_KEY = "cyline.admin.apiBaseUrl";
+
   const state = {
     maps: [],
     unknownMaps: [],
@@ -10,6 +12,7 @@
 
   const adminStatus = document.getElementById("adminStatus");
   const adminToken = document.getElementById("adminToken");
+  const adminApiBaseUrl = document.getElementById("adminApiBaseUrl");
   const adminMapFilter = document.getElementById("adminMapFilter");
   const adminKeyword = document.getElementById("adminKeyword");
   const adminReviewOnly = document.getElementById("adminReviewOnly");
@@ -29,14 +32,20 @@
   const adminResult = document.getElementById("adminResult");
 
   async function initialize() {
+    setupApiBaseUrlInput();
     await loadMaps();
     setupMapOptions();
     await loadLineups();
     await loadReports();
   }
 
+  function setupApiBaseUrlInput() {
+    const config = window.CYLINE_CONFIG || {};
+    adminApiBaseUrl.value = localStorage.getItem(ADMIN_API_BASE_URL_KEY) || config.apiBaseUrl || "";
+  }
+
   async function loadMaps() {
-    const response = await fetch("data/maps.json", { cache: "no-store" });
+    const response = await fetchNoCache("data/maps.json");
     if (!response.ok) {
       throw new Error(`maps.json HTTP ${response.status}`);
     }
@@ -45,7 +54,7 @@
   }
 
   async function loadLineups() {
-    const response = await fetch("data/index.json", { cache: "no-store" });
+    const response = await fetchNoCache("data/index.json");
     if (!response.ok) {
       throw new Error(`index.json HTTP ${response.status}`);
     }
@@ -62,7 +71,7 @@
 
   async function loadReports() {
     try {
-      const response = await fetch("data/reports.json", { cache: "no-store" });
+      const response = await fetchNoCache("data/reports.json");
       if (!response.ok) {
         state.reports = [];
         renderReports();
@@ -309,8 +318,7 @@
 
   async function submitAdminUpdate(event) {
     event.preventDefault();
-    const config = window.CYLINE_CONFIG || {};
-    const apiBaseUrl = (config.apiBaseUrl || "").replace(/\/$/, "");
+    const apiBaseUrl = getAdminApiBaseUrl();
     const token = adminToken.value.trim();
     adminResult.className = "form-result";
     adminResult.textContent = "";
@@ -361,7 +369,7 @@
       selectLineup(responseData.record.id);
       adminResult.textContent = `更新しました: ${responseData.record.id}`;
     } catch (error) {
-      showError(`更新に失敗しました: ${error.message}`);
+      showError(buildApiErrorMessage("更新", error, apiBaseUrl));
     } finally {
       submitButton.disabled = false;
     }
@@ -373,8 +381,7 @@
       return;
     }
 
-    const config = window.CYLINE_CONFIG || {};
-    const apiBaseUrl = (config.apiBaseUrl || "").replace(/\/$/, "");
+    const apiBaseUrl = getAdminApiBaseUrl();
     const token = adminToken.value.trim();
     adminResult.className = "form-result";
     adminResult.textContent = "";
@@ -409,10 +416,12 @@
       }
 
       state.lineups = state.lineups.filter((lineup) => lineup.id !== lineupId);
+      state.reports = state.reports.filter((report) => report.lineup_id !== lineupId);
       state.selectedLineup = null;
       updateUnknownMaps();
       setupMapOptions();
       applyFilters();
+      renderReports();
       if (state.filteredLineups[0]) {
         selectLineup(state.filteredLineups[0].id);
       } else {
@@ -420,7 +429,7 @@
       }
       adminResult.textContent = `削除しました: ${lineupId}`;
     } catch (error) {
-      showError(`削除に失敗しました: ${error.message}`);
+      showError(buildApiErrorMessage("削除", error, apiBaseUrl));
     } finally {
       adminDeleteButton.disabled = false;
     }
@@ -482,6 +491,27 @@
   function showError(message) {
     adminResult.classList.add("error");
     adminResult.textContent = message;
+  }
+
+  function getAdminApiBaseUrl() {
+    return adminApiBaseUrl.value.trim().replace(/\/$/, "");
+  }
+
+  function saveAdminApiBaseUrl() {
+    localStorage.setItem(ADMIN_API_BASE_URL_KEY, adminApiBaseUrl.value.trim());
+  }
+
+  function buildApiErrorMessage(actionName, error, apiBaseUrl) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      return `${actionName}に失敗しました: APIに接続できません。API URL欄の値 (${apiBaseUrl || "未設定"}) を確認してください。GitHub Pagesから使う場合は、UbuntuサーバーのHTTPS URLが必要です。`;
+    }
+
+    return `${actionName}に失敗しました: ${error.message}`;
+  }
+
+  function fetchNoCache(path) {
+    const separator = path.includes("?") ? "&" : "?";
+    return fetch(`${path}${separator}v=${Date.now()}`, { cache: "no-store" });
   }
 
   function getPosition(lineup) {
@@ -555,6 +585,8 @@
   }
 
   adminMapFilter.addEventListener("change", applyFilters);
+  adminApiBaseUrl.addEventListener("change", saveAdminApiBaseUrl);
+  adminApiBaseUrl.addEventListener("blur", saveAdminApiBaseUrl);
   adminKeyword.addEventListener("input", applyFilters);
   adminReviewOnly.addEventListener("change", applyFilters);
   adminEditMap.addEventListener("change", renderMap);

@@ -30,6 +30,7 @@
   const mapFilter = document.getElementById("mapFilter");
   const abilityFilter = document.getElementById("abilityFilter");
   const jumpFilter = document.getElementById("jumpFilter");
+  const reloadButton = document.getElementById("reloadButton");
   const registerMap = document.getElementById("registerMap");
   const lineupGrid = document.getElementById("lineupGrid");
   const registerForm = document.getElementById("registerForm");
@@ -55,7 +56,7 @@
 
   async function loadMaps() {
     try {
-      const response = await fetch("data/maps.json", { cache: "no-store" });
+      const response = await fetchNoCache("data/maps.json");
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -89,7 +90,7 @@
 
   async function loadLineups() {
     try {
-      const response = await fetch("data/index.json", { cache: "no-store" });
+      const response = await fetchNoCache("data/index.json");
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -347,6 +348,18 @@
     }
   }
 
+  async function reloadViewerData() {
+    reloadButton.disabled = true;
+    statusText.textContent = "再読み込み中";
+    try {
+      await loadMaps();
+      setupMapOptions();
+      await loadLineups();
+    } finally {
+      reloadButton.disabled = false;
+    }
+  }
+
   async function submitReport(event) {
     event.preventDefault();
     reportResult.className = "form-result";
@@ -412,9 +425,15 @@
     return `報告に失敗しました: ${error.message}`;
   }
 
+  function fetchNoCache(path) {
+    const separator = path.includes("?") ? "&" : "?";
+    return fetch(`${path}${separator}v=${Date.now()}`, { cache: "no-store" });
+  }
+
   mapFilter.addEventListener("change", applyFilters);
   abilityFilter.addEventListener("change", applyFilters);
   jumpFilter.addEventListener("change", applyFilters);
+  reloadButton.addEventListener("click", reloadViewerData);
   registerForm.addEventListener("submit", submitRegistration);
   reportForm.addEventListener("submit", submitReport);
   closeDialog.addEventListener("click", () => detailDialog.close());

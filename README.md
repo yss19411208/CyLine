@@ -215,6 +215,11 @@ Lineups whose map name is not in the current Valorant map catalog are shown as
 them. The admin editor also shows the registered screenshot, recent reports,
 and a token-protected delete button.
 
+If the admin page shows `Failed to fetch`, the browser could not reach the API.
+For GitHub Pages usage, enter the public HTTPS API URL in the admin page's
+`API URL` field. `http://127.0.0.1:8000` only works from the same machine that
+is running `cyline-api`.
+
 ## Map assets
 
 Map metadata and display icons come from the non-official Valorant-API map
