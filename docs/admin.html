@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CyLine Admin</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>CyLine Admin</h1>
+        <p>定点管理</p>
+      </div>
+      <div class="status" id="adminStatus">未接続</div>
+    </header>
+
+    <main class="admin-layout">
+      <section class="panel admin-list-panel">
+        <label>
+          管理トークン
+          <input type="password" id="adminToken" autocomplete="off">
+        </label>
+        <label>
+          マップ
+          <select id="adminMapFilter"></select>
+        </label>
+        <label>
+          検索
+          <input type="search" id="adminKeyword" autocomplete="off">
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="adminReviewOnly">
+          要確認のみ
+        </label>
+        <div class="admin-list" id="adminList"></div>
+      </section>
+
+      <section class="content">
+        <section class="map-panel">
+          <div class="map-header">
+            <h2 id="adminMapTitle">マップ</h2>
+            <p id="adminMapStatus">選択してください</p>
+          </div>
+          <div class="map-stage admin-map-stage" id="adminMapStage">
+            <img id="adminMapImage" alt="">
+            <div class="map-pins" id="adminMapPins"></div>
+          </div>
+        </section>
+
+        <section class="panel admin-editor">
+          <h2>編集</h2>
+          <form id="adminForm">
+            <input type="hidden" name="id">
+            <div class="admin-editor-grid">
+              <label>
+                タイトル
+                <input type="text" name="title" maxlength="120">
+              </label>
+              <label>
+                マップ
+                <select name="map" id="adminEditMap" required></select>
+              </label>
+              <label>
+                アビリティ
+                <select name="ability" required>
+                  <option value="camera">スパイカメラ</option>
+                  <option value="cage">サイバーケージ</option>
+                  <option value="wire">トラップワイヤー</option>
+                </select>
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="jump">
+                ジャンプあり
+              </label>
+            </div>
+            <label>
+              説明
+              <textarea name="description" rows="4" maxlength="1200"></textarea>
+            </label>
+            <div class="coordinate-row">
+              <label>
+                X
+                <input type="number" name="position_x" min="0" max="100" step="0.01" required>
+              </label>
+              <label>
+                Y
+                <input type="number" name="position_y" min="0" max="100" step="0.01" required>
+              </label>
+            </div>
+            <label class="checkbox-row">
+              <input type="checkbox" name="needs_review">
+              要確認
+            </label>
+            <button type="submit">更新</button>
+            <p class="form-result" id="adminResult"></p>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

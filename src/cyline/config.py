@@ -61,6 +61,7 @@ class Settings:
     git_branch: str
     git_executable: str
     web_api_token: str
+    admin_api_token: str
     cors_allowed_origins: list[str]
     max_screenshot_bytes: int
 
@@ -113,6 +114,7 @@ class Settings:
             git_branch=os.getenv("CYLINE_GIT_BRANCH", "").strip(),
             git_executable=_read_optional_path("CYLINE_GIT_EXECUTABLE", "git"),
             web_api_token=os.getenv("CYLINE_WEB_API_TOKEN", "").strip(),
+            admin_api_token=os.getenv("CYLINE_ADMIN_TOKEN", "").strip(),
             cors_allowed_origins=cors_allowed_origins or ["*"],
             max_screenshot_bytes=max_screenshot_bytes,
         )

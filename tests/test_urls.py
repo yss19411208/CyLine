@@ -26,6 +26,7 @@ class UrlTest(unittest.TestCase):
             git_branch="main",
             git_executable="git",
             web_api_token="",
+            admin_api_token="",
             cors_allowed_origins=["*"],
             max_screenshot_bytes=1000,
         )

@@ -15,6 +15,7 @@ and from a GitHub Pages front end.
 - GitHub Pages map viewer and web registration form.
 - Minimap position estimate with manual correction.
 - Discord lineup search.
+- Admin-only edit page for correcting lineup metadata and coordinates.
 
 ## Important security note
 
@@ -25,6 +26,9 @@ the Python API writes files and runs Git.
 If `CYLINE_WEB_API_TOKEN` is empty, the web API accepts public submissions. That
 is convenient for testing but can be abused. The committed GitHub Pages front
 end does not send a secret token, because public JavaScript would expose it.
+
+Admin edits require `CYLINE_ADMIN_TOKEN`. Do not put this token in `docs/`
+files; enter it only in the admin page when using the tool.
 
 ## Requirements
 
@@ -75,6 +79,7 @@ Recommended for development:
 CYLINE_DISCORD_GUILD_ID=your_test_server_id
 CYLINE_AUTO_GIT_COMMIT=true
 CYLINE_AUTO_GIT_PUSH=false
+CYLINE_ADMIN_TOKEN=your_admin_edit_token
 ```
 
 Set `CYLINE_AUTO_GIT_PUSH=true` only after the Git remote and branch are ready.
@@ -111,7 +116,8 @@ Optional fields:
 - `position_x`
 - `position_y`
 
-Manual positions use 0 to 100 percent inside the minimap area.
+Manual registration positions and admin coordinate corrections use 0 to 100
+percent on the displayed map image.
 
 ## Run web registration API
 
@@ -131,6 +137,14 @@ http://127.0.0.1:8000
 
 Opening that URL should return a small JSON status response. The registration
 form sends submissions to `http://127.0.0.1:8000/api/lineups`.
+
+The admin update API listens on:
+
+```text
+PATCH http://127.0.0.1:8000/api/admin/lineups/<id>
+```
+
+It requires `CYLINE_ADMIN_TOKEN` through the `X-CyLine-Admin-Token` header.
 
 `docs/config.js` is set to this local API URL by default. For GitHub Pages usage
 from another device or from other users, deploy this API separately and replace
@@ -164,6 +178,15 @@ Open:
 http://127.0.0.1:8080/
 ```
 
+Open the admin editor:
+
+```text
+http://127.0.0.1:8080/admin.html
+```
+
+The admin editor loads the same static JSON as the viewer, then sends updates
+to `cyline-api`. Use the map preview click target to correct bad coordinates.
+
 ## Map assets
 
 Map metadata and display icons come from the non-official Valorant-API map
@@ -186,11 +209,11 @@ viewer. The current default is the Valorant-API `displayIcon` orientation.
 
 ## Minimap detection status
 
-The detector is intentionally conservative. It crops the likely top-left
-minimap area, searches for the red/white player pin instead of the yellow spike
-icon, then tries to match the selected map template while considering rotation,
-flips, and scale differences. The result is saved with `confidence` and
-`needs_review`.
+The detector is intentionally conservative. It tests several top-left minimap
+candidates, matches the selected map template while considering rotation, flips,
+and scale differences, then searches inside the matched map area for the
+red/white player pin instead of the yellow spike icon. The result is saved with
+`confidence` and `needs_review`.
 
 If OpenCV is unavailable or matching confidence is low, the lineup is saved with
 `needs_review=true` and can still be manually corrected.

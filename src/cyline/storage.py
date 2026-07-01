@@ -9,8 +9,8 @@ from pathlib import Path
 
 from .config import Settings
 from .constants import ABILITIES, JUMP_LABELS
-from .minimap import estimate_player_position
-from .models import Author, LineupInput
+from .minimap import build_manual_map_position, estimate_player_position
+from .models import Author, LineupInput, ManualPosition
 
 
 ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
@@ -114,6 +114,75 @@ class LineupStorage:
         index_data["lineups"].sort(key=lambda lineup: lineup.get("created_at", ""), reverse=True)
         _write_json(index_path, index_data)
 
+    def update_lineup(self, lineup_id: str, updates: dict) -> tuple[dict, list[Path]]:
+        if not lineup_id or "/" in lineup_id or "\\" in lineup_id:
+            raise ValueError("定点IDが不正です。")
+
+        json_path = self.settings.lineups_dir / f"{lineup_id}.json"
+        if not json_path.exists():
+            raise ValueError(f"定点が見つかりません: {lineup_id}")
+
+        try:
+            record = json.loads(json_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as json_error:
+            raise ValueError("定点JSONを読み込めません。") from json_error
+
+        if record.get("id") != lineup_id:
+            raise ValueError("定点JSONのIDが一致しません。")
+
+        if "title" in updates:
+            record["title"] = str(updates.get("title") or "").strip()
+
+        if "description" in updates:
+            record["description"] = str(updates.get("description") or "").strip()
+
+        if "map" in updates:
+            valorant_map = str(updates.get("map") or "").strip()
+            if valorant_map not in self._valid_maps():
+                raise ValueError(f"不明なマップです: {valorant_map}")
+            record["map"] = valorant_map
+
+        if "ability" in updates:
+            ability = str(updates.get("ability") or "").strip()
+            if ability not in ABILITIES:
+                raise ValueError(f"不明なアビリティです: {ability}")
+            record["ability"] = ability
+            record["ability_label"] = ABILITIES[ability]
+
+        if "jump" in updates:
+            record["jump"] = _coerce_bool(updates.get("jump"))
+            record["jump_label"] = JUMP_LABELS[record["jump"]]
+
+        has_position_x = "position_x" in updates
+        has_position_y = "position_y" in updates
+        if has_position_x or has_position_y:
+            if not has_position_x or not has_position_y:
+                raise ValueError("position_xとposition_yは両方指定してください。")
+
+            manual_position = ManualPosition(
+                x_percent=_coerce_percent(updates.get("position_x"), "position_x"),
+                y_percent=_coerce_percent(updates.get("position_y"), "position_y"),
+            )
+            map_position = build_manual_map_position(
+                manual_position,
+                str(record["map"]),
+                self.settings.maps_dir,
+                method="admin_manual",
+            )
+            record["map_position"] = asdict(map_position)
+
+        if "needs_review" in updates and isinstance(record.get("map_position"), dict):
+            record["map_position"]["needs_review"] = _coerce_bool(updates.get("needs_review"))
+
+        _write_json(json_path, record)
+        self._update_index(record)
+        return record, [json_path, self.settings.data_dir / "index.json"]
+
+    def _valid_maps(self) -> set[str]:
+        from .constants import VALORANT_MAPS
+
+        return set(VALORANT_MAPS)
+
 
 def _build_lineup_id(created_at: str) -> str:
     compact_timestamp = (
@@ -159,3 +228,22 @@ def _write_json(path: Path, data: dict) -> None:
         json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _coerce_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on", "jump"}
+    return bool(value)
+
+
+def _coerce_percent(value: object, field_name: str) -> float:
+    try:
+        percent = float(value)
+    except (TypeError, ValueError) as conversion_error:
+        raise ValueError(f"{field_name}は数値で指定してください。") from conversion_error
+
+    if not 0 <= percent <= 100:
+        raise ValueError(f"{field_name}は0から100の範囲で指定してください。")
+    return percent

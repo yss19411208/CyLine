@@ -106,17 +106,36 @@ def estimate_player_position(
                     "スクリーンショットが小さすぎるため、ミニマップ解析の信頼度を確保できません。",
                 )
 
-            minimap_crop = _crop_likely_minimap(rgb_image)
-            map_alignment = _match_minimap_to_selected_map(
-                minimap_crop,
-                lineup_map=valorant_map,
-                maps_dir=maps_dir,
-            )
-            marker_position = _find_player_marker(
-                minimap_crop,
-                search_bounds=_alignment_search_bounds(map_alignment, minimap_crop.size),
-            )
-            if marker_position is None:
+            best_analysis = None
+            best_score = -1.0
+            for minimap_crop in _candidate_minimap_crops(rgb_image):
+                candidate_analysis = _estimate_from_minimap_crop(
+                    minimap_crop=minimap_crop,
+                    valorant_map=valorant_map,
+                    maps_dir=maps_dir,
+                    map_width=map_width,
+                    map_height=map_height,
+                )
+                if candidate_analysis is None:
+                    continue
+
+                candidate_position = candidate_analysis.map_position
+                candidate_score = candidate_position.confidence
+                if candidate_position.needs_review:
+                    candidate_score -= 0.25
+
+                if candidate_score > best_score:
+                    best_analysis = candidate_analysis
+                    best_score = candidate_score
+
+                if (
+                    not candidate_position.needs_review
+                    and candidate_position.confidence >= 0.9
+                    and candidate_position.method.startswith("map_alignment:")
+                ):
+                    return candidate_analysis
+
+            if best_analysis is None:
                 return _unavailable_analysis(
                     map_width,
                     map_height,
@@ -124,36 +143,7 @@ def estimate_player_position(
                     "信頼できるプレイヤーマーカー候補が見つかりませんでした。",
                 )
 
-            marker_x, marker_y, marker_confidence = marker_position
-            crop_width, crop_height = minimap_crop.size
-            detected_x_percent = round((marker_x / max(crop_width - 1, 1)) * 100, 2)
-            detected_y_percent = round((marker_y / max(crop_height - 1, 1)) * 100, 2)
-
-            detected_position = MinimapEstimate(
-                x_percent=detected_x_percent,
-                y_percent=detected_y_percent,
-                confidence=marker_confidence,
-                method="top_left_minimap_marker",
-                needs_review=marker_confidence < 0.55,
-                note="左上のミニマップからプレイヤーマーカー候補を検出しました。",
-            )
-
-            map_position = _build_position_from_alignment(
-                marker_x=marker_x,
-                marker_y=marker_y,
-                marker_confidence=marker_confidence,
-                map_alignment=map_alignment,
-                valorant_map=valorant_map,
-                fallback_x_percent=detected_x_percent,
-                fallback_y_percent=detected_y_percent,
-                map_width=map_width,
-                map_height=map_height,
-            )
-
-            return PositionAnalysis(
-                detected_position=detected_position,
-                map_position=map_position,
-            )
+            return best_analysis
     except OSError:
         return _unavailable_analysis(
             map_width,
@@ -161,6 +151,73 @@ def estimate_player_position(
             "invalid_image",
             "アップロードされたファイルを画像として開けませんでした。",
         )
+
+
+def build_manual_map_position(
+    manual_position: ManualPosition,
+    valorant_map: str,
+    maps_dir: Path,
+    method: str = "manual",
+) -> MapPosition:
+    map_width, map_height = _read_map_dimensions(valorant_map, maps_dir)
+    return _build_map_position(
+        x_percent=manual_position.x_percent,
+        y_percent=manual_position.y_percent,
+        map_width=map_width,
+        map_height=map_height,
+        confidence=1.0,
+        needs_review=False,
+        method=method,
+    )
+
+
+def _estimate_from_minimap_crop(
+    minimap_crop,
+    valorant_map: str,
+    maps_dir: Path,
+    map_width: int | None,
+    map_height: int | None,
+) -> PositionAnalysis | None:
+    map_alignment = _match_minimap_to_selected_map(
+        minimap_crop,
+        lineup_map=valorant_map,
+        maps_dir=maps_dir,
+    )
+    marker_position = _find_player_marker(
+        minimap_crop,
+        search_bounds=_alignment_search_bounds(map_alignment, minimap_crop.size),
+    )
+    if marker_position is None:
+        return None
+
+    marker_x, marker_y, marker_confidence = marker_position
+    crop_width, crop_height = minimap_crop.size
+    detected_x_percent = round((marker_x / max(crop_width - 1, 1)) * 100, 2)
+    detected_y_percent = round((marker_y / max(crop_height - 1, 1)) * 100, 2)
+
+    detected_position = MinimapEstimate(
+        x_percent=detected_x_percent,
+        y_percent=detected_y_percent,
+        confidence=marker_confidence,
+        method="top_left_minimap_marker",
+        needs_review=marker_confidence < 0.55,
+        note="左上のミニマップからプレイヤーマーカー候補を検出しました。",
+    )
+    map_position = _build_position_from_alignment(
+        marker_x=marker_x,
+        marker_y=marker_y,
+        marker_confidence=marker_confidence,
+        map_alignment=map_alignment,
+        valorant_map=valorant_map,
+        fallback_x_percent=detected_x_percent,
+        fallback_y_percent=detected_y_percent,
+        map_width=map_width,
+        map_height=map_height,
+    )
+    return PositionAnalysis(
+        detected_position=detected_position,
+        map_position=map_position,
+    )
 
 
 def _unavailable_analysis(
@@ -205,19 +262,46 @@ def _read_map_dimensions(valorant_map: str, maps_dir: Path) -> tuple[int | None,
 
 
 def _crop_likely_minimap(rgb_image):
+    return _candidate_minimap_crops(rgb_image)[0]
+
+
+def _candidate_minimap_crops(rgb_image):
     image_width, image_height = rgb_image.size
-    crop_left = int(image_width * 0.03)
-    crop_top = int(image_height * 0.09)
-    crop_size = int(min(image_width * 0.20, image_height * 0.38))
-    crop_size = max(160, min(crop_size, image_width - crop_left, image_height - crop_top))
-    return rgb_image.crop(
-        (
-            crop_left,
-            crop_top,
-            crop_left + crop_size,
-            crop_top + crop_size,
+    base_size = int(min(image_width * 0.20, image_height * 0.38))
+    crop_specs = [
+        (0.03, 0.09, 1.00),
+        (0.03, 0.07, 1.00),
+        (0.00, 0.07, 1.18),
+        (0.00, 0.09, 1.18),
+        (0.02, 0.07, 1.00),
+        (0.06, 0.07, 1.00),
+        (0.00, 0.00, 1.28),
+    ]
+    seen_bounds: set[tuple[int, int, int]] = set()
+    crops = []
+    for left_ratio, top_ratio, size_ratio in crop_specs:
+        crop_left = int(image_width * left_ratio)
+        crop_top = int(image_height * top_ratio)
+        crop_size = int(base_size * size_ratio)
+        crop_size = max(
+            160,
+            min(crop_size, image_width - crop_left, image_height - crop_top),
         )
-    )
+        bounds_key = (crop_left, crop_top, crop_size)
+        if bounds_key in seen_bounds:
+            continue
+        seen_bounds.add(bounds_key)
+        crops.append(
+            rgb_image.crop(
+                (
+                    crop_left,
+                    crop_top,
+                    crop_left + crop_size,
+                    crop_top + crop_size,
+                )
+            )
+        )
+    return crops
 
 
 def _find_player_marker(rgb_image, search_bounds: tuple[int, int, int, int] | None = None):

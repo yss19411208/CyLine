@@ -66,6 +66,13 @@ label,
   padding: 18px;
 }
 
+.admin-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -220,6 +227,59 @@ button:disabled {
   background: #fbbf24;
 }
 
+.map-pin.active {
+  outline: 3px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.admin-list-panel {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.admin-list {
+  display: grid;
+  gap: 8px;
+  max-height: calc(100vh - 330px);
+  overflow: auto;
+}
+
+.admin-list-item {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 10px;
+  border-color: var(--line);
+  background: var(--surface-strong);
+  color: var(--text);
+  text-align: left;
+}
+
+.admin-list-item.active {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.admin-list-item small {
+  color: var(--muted);
+}
+
+.admin-editor form {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px 180px 150px;
+  gap: 10px;
+}
+
+.admin-map-stage {
+  cursor: crosshair;
+}
+
 .lineup-card {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -330,6 +390,14 @@ dialog::backdrop {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
+  .admin-layout {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  .admin-editor-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .register-panel {
     grid-column: 1 / -1;
   }
@@ -347,6 +415,11 @@ dialog::backdrop {
   }
 
   .layout {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .admin-layout {
     grid-template-columns: 1fr;
     padding: 12px;
   }

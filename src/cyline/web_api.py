@@ -28,6 +28,7 @@ def create_app(settings: Settings | None = None) -> Flask:
                 "service": "CyLine API",
                 "status": "ok",
                 "endpoints": {
+                    "admin_update_lineup": "/api/admin/lineups/<id>",
                     "options": "/api/options",
                     "register_lineup": "/api/lineups",
                 },
@@ -87,6 +88,29 @@ def create_app(settings: Settings | None = None) -> Flask:
         except Exception as unexpected_error:
             return jsonify({"error": str(unexpected_error)}), 500
 
+    @app.patch("/api/admin/lineups/<lineup_id>")
+    def update_lineup(lineup_id: str):
+        authorization_error = _check_admin_authorization(active_settings)
+        if authorization_error is not None:
+            return authorization_error
+
+        updates = request.get_json(silent=True)
+        if not isinstance(updates, dict):
+            return jsonify({"error": "JSON bodyが必要です。"}), 400
+
+        try:
+            record, git_result = service.update_lineup(lineup_id, updates)
+            return jsonify(
+                {
+                    "record": record,
+                    "git": git_result.__dict__,
+                }
+            )
+        except ValueError as validation_error:
+            return jsonify({"error": str(validation_error)}), 400
+        except Exception as unexpected_error:
+            return jsonify({"error": str(unexpected_error)}), 500
+
     return app
 
 
@@ -102,6 +126,20 @@ def _check_authorization(settings: Settings):
     submitted_token = request.headers.get("X-CyLine-Token", "")
     if submitted_token != settings.web_api_token:
         return jsonify({"error": "認証に失敗しました。"}), 401
+
+    return None
+
+
+def _check_admin_authorization(settings: Settings):
+    if not settings.admin_api_token:
+        return jsonify({"error": "管理者APIトークンが設定されていません。"}), 403
+
+    submitted_token = (
+        request.headers.get("X-CyLine-Admin-Token", "")
+        or request.headers.get("X-CyLine-Token", "")
+    )
+    if submitted_token != settings.admin_api_token:
+        return jsonify({"error": "管理者認証に失敗しました。"}), 401
 
     return None
 

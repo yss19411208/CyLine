@@ -29,3 +29,8 @@ class LineupService:
         git_result = self.git_publisher.publish(changed_paths, commit_message)
         return record, git_result
 
+    def update_lineup(self, lineup_id: str, updates: dict) -> tuple[dict, GitResult]:
+        record, changed_paths = self.storage.update_lineup(lineup_id, updates)
+        commit_message = f"Update Cypher lineup {record['id']}"
+        git_result = self.git_publisher.publish(changed_paths, commit_message)
+        return record, git_result
