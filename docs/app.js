@@ -328,10 +328,18 @@
       await loadLineups();
     } catch (error) {
       formResult.classList.add("error");
-      formResult.textContent = `登録に失敗しました: ${error.message}`;
+      formResult.textContent = buildRegistrationErrorMessage(error, config.apiBaseUrl);
     } finally {
       submitButton.disabled = false;
     }
+  }
+
+  function buildRegistrationErrorMessage(error, apiBaseUrl) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      return `登録に失敗しました: APIに接続できません。cyline-apiが起動しているか、API URL (${apiBaseUrl}) が正しいか確認してください。`;
+    }
+
+    return `登録に失敗しました: ${error.message}`;
   }
 
   mapFilter.addEventListener("change", applyFilters);
