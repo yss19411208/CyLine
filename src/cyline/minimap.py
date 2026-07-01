@@ -184,9 +184,18 @@ def _read_map_dimensions(valorant_map: str, maps_dir: Path) -> tuple[int | None,
 
 def _crop_likely_minimap(rgb_image):
     image_width, image_height = rgb_image.size
-    crop_size = int(min(image_width * 0.32, image_height * 0.48))
-    crop_size = max(180, min(crop_size, image_width, image_height))
-    return rgb_image.crop((0, 0, crop_size, crop_size))
+    crop_left = int(image_width * 0.06)
+    crop_top = int(image_height * 0.07)
+    crop_size = int(min(image_width * 0.20, image_height * 0.38))
+    crop_size = max(160, min(crop_size, image_width - crop_left, image_height - crop_top))
+    return rgb_image.crop(
+        (
+            crop_left,
+            crop_top,
+            crop_left + crop_size,
+            crop_top + crop_size,
+        )
+    )
 
 
 def _find_player_marker(rgb_image):
@@ -390,6 +399,17 @@ def _estimate_map_position_from_template(
         or marker_x > match_x + match_size
         or marker_y > match_y + match_size
     )
+
+    if needs_review:
+        return _build_map_position(
+            x_percent=fallback_x_percent,
+            y_percent=fallback_y_percent,
+            map_width=map_width,
+            map_height=map_height,
+            confidence=round(marker_confidence * 0.5, 2),
+            needs_review=True,
+            method=f"marker_percent_low_template_confidence:{'+'.join(operations) or 'identity'}",
+        )
 
     return _build_map_position(
         x_percent=base_x_percent,

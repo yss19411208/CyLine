@@ -1,0 +1,31 @@
+import unittest
+from pathlib import Path
+
+from cyline.minimap import estimate_player_position
+
+
+class MinimapDetectionTest(unittest.TestCase):
+    def test_ascent_fixture_detects_player_marker_near_lower_minimap(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        screenshot_path = (
+            repo_root
+            / "docs"
+            / "assets"
+            / "lineups"
+            / "20260701T021144Z-5c0f1605.webp"
+        )
+        screenshot_bytes = screenshot_path.read_bytes()
+
+        position_analysis = estimate_player_position(
+            screenshot_bytes=screenshot_bytes,
+            manual_position=None,
+            valorant_map="Unknown",
+            maps_dir=repo_root / "docs" / "assets" / "maps",
+        )
+
+        self.assertGreater(position_analysis.detected_position.y_percent, 80)
+        self.assertLess(position_analysis.detected_position.x_percent, 40)
+
+
+if __name__ == "__main__":
+    unittest.main()
