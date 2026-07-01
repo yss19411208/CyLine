@@ -28,20 +28,26 @@ end does not send a secret token, because public JavaScript would expose it.
 
 ## Requirements
 
-This project targets Python 3.12 or later. The current workspace syntax check
-was run with Python 3.12.13 from the Codex bundled runtime.
+This project targets Python 3.11 or later. The current workspace syntax check
+was run with Python 3.12.13 from the Codex bundled runtime, but the dependency
+range is kept compatible with Python 3.11.
 
 Install dependencies:
 
 ```powershell
-py -3.12 -m venv .venv
+py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-If the `py` launcher says no Python is installed, install Python 3.12 from the
-official Python installer first.
+If the existing `.venv` already runs the Discord bot, you do not need to replace
+Python itself. Reinstall dependencies after pulling updates:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
 
 ## Configure
 
