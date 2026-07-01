@@ -81,6 +81,9 @@ Set `CYLINE_AUTO_GIT_PUSH=true` only after the Git remote and branch are ready.
 
 ## Run Discord bot
 
+Run the Discord bot in its own PowerShell window. `cyline-api` does not start
+the bot.
+
 ```powershell
 .\.venv\Scripts\Activate.ps1
 cyline-bot
@@ -112,6 +115,9 @@ Manual positions use 0 to 100 percent inside the minimap area.
 
 ## Run web registration API
 
+Run the web registration API in a second PowerShell window if the Discord bot is
+already running.
+
 ```powershell
 .\.venv\Scripts\Activate.ps1
 cyline-api
@@ -122,6 +128,9 @@ The API listens on:
 ```text
 http://127.0.0.1:8000
 ```
+
+Opening that URL should return a small JSON status response. The registration
+form sends submissions to `http://127.0.0.1:8000/api/lineups`.
 
 `docs/config.js` is set to this local API URL by default. For GitHub Pages usage
 from another device or from other users, deploy this API separately and replace

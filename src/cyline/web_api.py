@@ -21,6 +21,20 @@ def create_app(settings: Settings | None = None) -> Flask:
     except ImportError:
         pass
 
+    @app.get("/")
+    def health():
+        return jsonify(
+            {
+                "service": "CyLine API",
+                "status": "ok",
+                "endpoints": {
+                    "options": "/api/options",
+                    "register_lineup": "/api/lineups",
+                },
+                "note": "Discord botは別プロセスでcyline-botを起動してください。",
+            }
+        )
+
     @app.get("/api/options")
     def options():
         return jsonify(
