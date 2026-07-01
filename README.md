@@ -117,8 +117,9 @@ The API listens on:
 http://127.0.0.1:8000
 ```
 
-For GitHub Pages, deploy this API separately and set `apiBaseUrl` in
-`docs/config.js` to the public API URL.
+`docs/config.js` is set to this local API URL by default. For GitHub Pages usage
+from another device or from other users, deploy this API separately and replace
+`apiBaseUrl` in `docs/config.js` with the public HTTPS API URL.
 
 ## GitHub Pages
 
